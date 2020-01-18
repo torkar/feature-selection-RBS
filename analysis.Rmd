@@ -1,0 +1,176 @@
+---
+title: "Feature selection analysis"
+subtitle: "Companion analysis to the paper ..."
+author: "R. Torkar and R. Berntsson Svensson"
+date: "`r Sys.Date()`"
+output:
+  tufte::tufte_html: default
+#  tufte::tufte_handout:
+#    citation_package: natbib
+#    latex_engine: xelatex
+#  tufte::tufte_book:
+#    citation_package: natbib
+#    latex_engine: xelatex
+# bibliography: skeleton.bib
+#link-citations: yes
+---
+
+```{r setup, include=FALSE}
+library(tufte)
+# invalidate cache when the tufte version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+library(openxlsx)
+library(ggplot2)
+library(ggthemes)
+
+theme_set(theme_tufte())
+theme_update(
+  panel.background = element_rect(fill = "#fffff8", colour = "#fffff8"),
+  plot.background = element_rect(fill = "#fffff8", colour = "#fffff8")
+  )
+```
+
+# Introduction
+First prepare the data, check for NAs and, perhaps, zero-inflation, and check descriptive statistics. Since we're using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, data types changed, etc.)
+```{r}
+d <- read.xlsx("Features.xlsx", sheet = "Features")
+```
+
+This is how the data looks like. In short, 11110 rows and 10 variables.
+
+```{r}
+str(d)
+```
+
+Each row has a unique `ID`. Then `State` shows how far the feature got in the process (should be an ordered categorical and modeled as a monotonic variable). There are seven steps: Elicited, Prio, Planned, Implemented, Tested, Released, and Dropped.
+
+`Team.priority` is the relative priority the feature got ($\mathbb{N} = \{0,\ldots,1000\}$). `Critical feature` is a simple 'Yes'/'No' answer ($\mathbb{Z}_2$). `Business.value` and `Customer.value` are also ordered categorical with three levels and a fourth level called 'No value': Critical, Important, Valuable, and No value. `Stakeholders` have integers, i.e., $\mathbb{N} = \{0,\ldots,10\}$, and `Key.customers` the same, but with a different set, i.e., $\mathbb{N} = \{0,\ldots,60\}$. Finally, `Dependency` is $\mathbb{Z}_2$, while `Architects.involvement` is ordered categorical: None, simple, monitoring, active participation, and joint design.
+
+
+```{r}
+table(is.na(d))
+```
+
+No `NAs` in the dataset. However, that doesn't mean that we don't have `NAs`. Some of the coding can be a representation of `NA`, e.g., 'No value'. In this particular case we know that 'No value' and 'None' in the dataset actually are values and not a representation of `NA`.
+
+Finally, we should set correct data types on all variables.
+```{r}
+# Ordered categorical
+d$State <- factor(d$State, 
+                  levels = c("Elicited, Dropped", 
+                             "Elicited, Prio, Dropped", 
+                             "Elicited, Prio, Planned, Dropped", 
+                             "Elicited, Prio, Planned, Implemented, Dropped", 
+                             "Elicited, Prio, Planned, Implemented, Tested, Dropped", 
+                             "Elicited, Prio, Planned, Implemented, Tested, Released"), 
+                  ordered = TRUE)
+
+d$Business.value <- factor(d$Business.value, 
+                           levels = c("No value",
+                                      "Valuable",
+                                      "Important",
+                                      "Critical"), 
+                           ordered = TRUE)
+
+d$Customer.value <- factor(d$Customer.value, 
+                           levels = c("No value",
+                                      "Valuable",
+                                      "Important",
+                                      "Critical"), 
+                           ordered = TRUE)
+
+d$Architects.involvement <- factor(d$Architects.involvement,
+                                   levels = c("None",
+                                              "Simple",
+                                              "Monitoring",
+                                              "Active Participation",
+                                              "Joint Design"), 
+                                   ordered = TRUE)
+
+# binary
+d$Critical.feature <- ifelse(d$Critical.feature == 'Yes', 1, 0)
+d$Dependency <- ifelse(d$Dependency == 'Yes', 1, 0)
+
+```
+
+## Descriptive statistics
+
+```{r desc_stat, fig.margin=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+
+ggplot(d, aes(x=State)) + 
+  geom_histogram(stat = "count") +
+  xlab("") + 
+  ylab("Num. features") +
+  ggtitle("Variable 'State'") +
+  theme(axis.text.x = element_text(angle=15, hjust=1),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+
+ggplot(d, aes(x=Team.priority)) +
+  geom_histogram() +
+  xlab("") + ylab("") +
+  ggtitle("Variable 'Team.priority'") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+par(bg="#fffff8")
+barplot(table(d$Critical.feature), main = "Variable 'Critical.feature'")
+
+ggplot(d, aes(x=Business.value)) + 
+  geom_histogram(stat = "count") +
+  xlab("") + 
+  ylab("Num. features") +
+  ggtitle("Variable 'Business.value'") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+ggplot(d, aes(x=Customer.value)) + 
+  geom_histogram(stat = "count") +
+  xlab("") + 
+  ylab("Num. features") +
+  ggtitle("Variable 'Customer.value'") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+par(bg="#fffff8")
+barplot(table(d$Stakeholders), main = "Variable 'Stakeholders'")
+
+par(bg="#fffff8")
+barplot(table(d$Key.customers), main = "Variable 'Key.customers'")
+
+par(bg="#fffff8")
+barplot(table(d$Dependency), main = "Variable 'Dependency'")
+
+ggplot(d, aes(x=Architects.involvement)) + 
+  geom_histogram(stat = "count") +
+  xlab("") + 
+  ylab("Num. features") +
+  ggtitle("Variable 'Architects.involvement'") +
+  theme(axis.text.x = element_text(angle=15, hjust=1),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+
+```
+
+Let's plot our variables so we get a feeling for the distributions. In the margin you will find all variables plotted in various ways.
+
+We see that for `State` approximately as many features are released as dropped in the first state. After the initial state it drops off. For `Team.priority` many features have zero priority (5139), and then there's a bunch of them (1516) that have priority set to 1000.
+
+For `Critical.feature` we have an emphasis on 'No'. Concerning `Business.value` and `Customer.value` they are very similar in their respective distribution (as one would expect). For `Stakeholder` and `Key.customers` we see an emphasis on lower numbers, while for `Dependency` an emphasis on 'No'. 
+
+Finally, for `Architects.involvement` we see that in the absolute majority of the cases architects are not involved.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
