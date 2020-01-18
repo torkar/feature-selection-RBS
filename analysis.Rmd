@@ -150,9 +150,15 @@ ggplot(d, aes(x=Architects.involvement)) +
 
 Let's plot our variables so we get a feeling for the distributions. In the margin you will find all variables plotted in various ways.
 
-We see that for `State` approximately as many features are released as dropped in the first state. After the initial state it drops off. For `Team.priority` many features have zero priority (5139), and then there's a bunch of them (1516) that have priority set to 1000.
+We see that for `State` approximately as many features are released as dropped in the first state. After the initial state it drops off. 
 
-For `Critical.feature` we have an emphasis on 'No'. Concerning `Business.value` and `Customer.value` they are very similar in their respective distribution (as one would expect). For `Stakeholder` and `Key.customers` we see an emphasis on lower numbers, while for `Dependency` an emphasis on 'No'. 
+For `Team.priority` many features have zero in priority ($5139$), and then there's a bunch of them ($1516$) that have priority set to the maximum value, i.e., $1000$.
+
+For `Critical.feature` we have an emphasis on 'No'. 
+
+Concerning `Business.value` and `Customer.value` they are very similar in their respective distribution (as one would expect). 
+
+For `Stakeholder` and `Key.customers` we see an emphasis on lower numbers, while for `Dependency` an emphasis on 'No'. 
 
 Finally, for `Architects.involvement` we see that in the absolute majority of the cases architects are not involved.
 
