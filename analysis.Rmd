@@ -5,14 +5,13 @@ author: "R. Torkar and R. Berntsson Svensson"
 date: "`r Sys.Date()`"
 output:
   tufte::tufte_html: default
-#  tufte::tufte_handout:
-#    citation_package: natbib
-#    latex_engine: xelatex
-#  tufte::tufte_book:
-#    citation_package: natbib
-#    latex_engine: xelatex
-# bibliography: skeleton.bib
-#link-citations: yes
+margin_references: true
+bibliography: refs.bib
+link-citations: yes
+csl: ieee-transactions-on-software-engineering.csl
+header-includes:
+  - \usepackage{amsmath}
+  - \DeclareMathOperator{\logit}{logit}
 ---
 
 ```{r setup, include=FALSE}
@@ -23,6 +22,12 @@ options(htmltools.dir.version = FALSE)
 library(openxlsx)
 library(ggplot2)
 library(ggthemes)
+library(brms)
+library(bayesplot)
+library(dplyr)
+library(kableExtra)
+
+options(mc.cores = parallel::detectCores()) # set num cores
 
 theme_set(theme_tufte())
 theme_update(
@@ -31,8 +36,10 @@ theme_update(
   )
 ```
 
+\newcommand{\logit}{\operatorname{logit}}
+
 # Introduction
-First prepare the data, check for NAs and, perhaps, zero-inflation, and check descriptive statistics. Since we're using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, data types changed, etc.)
+First prepare the data, check for `NAs` and look at some descriptive statistics. Since we're using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, data types changed, etc.)
 ```{r}
 d <- read.xlsx("Features.xlsx", sheet = "Features")
 ```
@@ -43,10 +50,35 @@ This is how the data looks like. In short, 11110 rows and 10 variables.
 str(d)
 ```
 
-Each row has a unique `ID`. Then `State` shows how far the feature got in the process (should be an ordered categorical and modeled as a monotonic variable). There are seven steps: Elicited, Prio, Planned, Implemented, Tested, Released, and Dropped.
+Each row has a unique `ID`. `State`, which is our outcome (dependent variable), shows how far the feature got in the process. It is of an ordered categorical type, which should be modeled with a cumulative likelihood. There are seven categories:
 
-`Team.priority` is the relative priority the feature got ($\mathbb{N} = \{0,\ldots,1000\}$). `Critical feature` is a simple 'Yes'/'No' answer ($\mathbb{Z}_2$). `Business.value` and `Customer.value` are also ordered categorical with three levels and a fourth level called 'No value': Critical, Important, Valuable, and No value. `Stakeholders` have integers, i.e., $\mathbb{N} = \{0,\ldots,10\}$, and `Key.customers` the same, but with a different set, i.e., $\mathbb{N} = \{0,\ldots,60\}$. Finally, `Dependency` is $\mathbb{Z}_2$, while `Architects.involvement` is ordered categorical: None, simple, monitoring, active participation, and joint design.
+* Elicited
+* Prio
+* Planned
+* Implemented
+* Tested
+* Released
+* Dropped
 
+`Team.priority` is the relative priority the feature got, $\mathbb{N} = \{0,\ldots,1000\}$. `Critical.feature` is a simple 'Yes'/'No' answer ($\mathbb{Z}_2$). 
+`Business.value` and `Customer.value` are also ordered categorical with three levels and a fourth level called 'No value': 
+
+* Critical
+* Important
+* Valuable
+* No value
+
+`Stakeholders` have integers, i.e., $\mathbb{N} = \{0,\ldots,10\}$, and `Key.customers` the same, but with a different set, i.e., $\mathbb{N} = \{0,\ldots,60\}$. 
+
+Finally, `Dependency` is $\mathbb{Z}_2$, while `Architects.involvement` is ordered categorical: 
+
+* None
+* Simple
+* Monitoring
+* Active participation
+* Joint design
+
+All ordered categorical predictors (independent variables) should be modeled as monotonic effects [@burkner20monotonic].
 
 ```{r}
 table(is.na(d))
@@ -54,9 +86,9 @@ table(is.na(d))
 
 No `NAs` in the dataset. However, that doesn't mean that we don't have `NAs`. Some of the coding can be a representation of `NA`, e.g., 'No value'. In this particular case we know that 'No value' and 'None' in the dataset actually are values and not a representation of `NA`.
 
-Finally, we should set correct data types on all variables.
+Finally, we should set correct data types on all predictors.
 ```{r}
-# Ordered categorical
+# ordered categorical
 d$State <- factor(d$State, 
                   levels = c("Elicited, Dropped", 
                              "Elicited, Prio, Dropped", 
@@ -102,14 +134,14 @@ ggplot(d, aes(x=State)) +
   geom_histogram(stat = "count") +
   xlab("") + 
   ylab("Num. features") +
-  ggtitle("Variable 'State'") +
+  ggtitle("Predictor 'State'") +
   theme(axis.text.x = element_text(angle=15, hjust=1),
         plot.title = element_text(hjust = 0.5, face = "bold"))
 
 ggplot(d, aes(x=Team.priority)) +
   geom_histogram() +
   xlab("") + ylab("") +
-  ggtitle("Variable 'Team.priority'") +
+  ggtitle("Predictor 'Team.priority'") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
 par(bg="#fffff8")
@@ -119,14 +151,14 @@ ggplot(d, aes(x=Business.value)) +
   geom_histogram(stat = "count") +
   xlab("") + 
   ylab("Num. features") +
-  ggtitle("Variable 'Business.value'") +
+  ggtitle("Predictor 'Business.value'") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
 ggplot(d, aes(x=Customer.value)) + 
   geom_histogram(stat = "count") +
   xlab("") + 
   ylab("Num. features") +
-  ggtitle("Variable 'Customer.value'") +
+  ggtitle("Predictor 'Customer.value'") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
 par(bg="#fffff8")
@@ -142,15 +174,20 @@ ggplot(d, aes(x=Architects.involvement)) +
   geom_histogram(stat = "count") +
   xlab("") + 
   ylab("Num. features") +
-  ggtitle("Variable 'Architects.involvement'") +
+  ggtitle("Predictor 'Architects.involvement'") +
   theme(axis.text.x = element_text(angle=15, hjust=1),
         plot.title = element_text(hjust = 0.5, face = "bold"))
 
 ```
 
-Let's plot our variables so we get a feeling for the distributions. In the margin you will find all variables plotted in various ways.
+We now have a data frame, `d`, which has all predictors' types correctly set.
+```{r}
+str(d)
+```
 
-We see that for `State` approximately as many features are released as dropped in the first state. After the initial state it drops off. 
+Let's plot our outcome and predictors so we get a feeling for the distributions. In the margin you will find all plotted.
+
+We see that for `State` approximately as many features are released (final stage) as dropped in the first state. We also see that it drops off after the initial state. 
 
 For `Team.priority` many features have zero in priority ($5139$), and then there's a bunch of them ($1516$) that have priority set to the maximum value, i.e., $1000$.
 
@@ -162,18 +199,203 @@ For `Stakeholder` and `Key.customers` we see an emphasis on lower numbers, while
 
 Finally, for `Architects.involvement` we see that in the absolute majority of the cases architects are not involved.
 
+In short, it looks sort of what one would expect, i.e., it's not hard to find answers to why the plots look the way they do. 
+
+However, before we continue, we should standardize some of our predictors so the sampling will be easier, i.e., we simply do $(x - \bar{x})/\sigma_x$, then simply adding multiplying with $\sigma_x$ and adding the mean, will allow us to get back to our untransformed scale. It's good practice to store this in new variables and suffix them with `_s`. At the same time, let's give our variables abbreviated names.
+
+```{r}
+d$prio_s <- scale(d$Team.priority)
+d$sh_s <- scale(d$Stakeholders)
+d$kc_s <- scale(d$Key.customers)
+
+d$crit <- d$Critical.feature
+d$b_val <- d$Business.value
+d$c_val <- d$Customer.value
+d$dep <- d$Dependency
+d$arch <- d$Architects.involvement
+```
+
+# Initial model comparison
+We compare two models (with default priors): One grand interecept null model, $\mathcal{M}_0$, and one with all predictors added, $\mathcal{M}$, to see if adding predictors makes a difference (if not, then we get depressed and conclude this matter for this time).
+
+First sample the two models with default priors.
+
+```{r null_model, cache=TRUE, warning=FALSE, message=FALSE}
+M_0 <- brm(State ~ 1, family = cumulative, data = d, refresh = 0)
+
+M <- brm(State ~ prio_s + crit + mo(b_val) + mo(c_val) + 
+                 sh_s + kc_s + dep + mo(arch),
+               family = cumulative,
+               data = d, refresh = 0)
+```
+
+Add `LOO` fit criterion to the models and then compare their respective out of sample predictions.
+
+```{r loo_comp, cache=TRUE, warning=FALSE, message=FALSE}
+M_0 <- add_criterion(M_0, criterion = "loo")
+M <- add_criterion(M, criterion = "loo")
+(l <- loo_compare(M_0, M))
+```
+
+`LOO` cleary puts $\mathcal{M}$ as no. 1. If we assume a $z_{\text{99%}}$-score of $2.576$ it's clear that zero is not in the interval and that $\mathcal{M}$ is better, i.e., $\text{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.576, 2)`]. We can conclude this by saying that adding predictors to $\mathcal{M}$ has a significant effect.
+
+## Prior predictive checks
+
+Before we start to use our data to do inferences we should think about our priors. Our outcome of interest is `State`, which is ordered categorical data and as such we will model it using a cumulative likelihood.
+
+First let's see what priors we would get with a full model where we include all other variables as predictors. We'll model `b_val`, `c_val`, and `arch` as montonic predictors since they are, precisely as our outcome, of an ordered categorical nature.
+
+First, we set weakly regularizing priors on $\beta$ and $\alpha$, while we set the same on our monotonic predictors. Then, after looking at different levels of priors, we concluded that the following priors were suitable for this model.
+
+```{r priors, warning=FALSE, message=FALSE}
+p <- get_prior(State ~ prio_s + crit + mo(b_val) + mo(c_val) + 
+                 sh_s + kc_s + dep + mo(arch),
+               family = cumulative,
+               data = d)
+
+p$prior[1] <- "normal(0, 0.5)"
+p$prior[10] <- "normal(0, 2)"
+# For Dirichlet, number of categories K - 1
+p$prior[16] <- "dirichlet(2, 2, 2, 2)" 
+p$prior[17:18] <- "dirichlet(2, 2, 2)"
+```
+
+Using math notation, the above looks like,
+
+$$
+\begin{eqnarray*}
+\text{State}_i & \sim & \text{Ordered-logit}(\phi_i,\kappa) \\
+\phi_i & \sim & \beta_{\text{prio}} \times \text{Priority}_i + \beta_{\text{crit}} \times \text{Critical Feature}_i\\
+& + & \beta_{\text{b}} \times \text{Business value}_i + \beta_{\text{c}} \times \text{Customer value}_i\\
+& + & \beta_{\text{sh}} \times \text{Stakeholders}_i + \beta_{\text{kc}} \times \text{Key customers}_i\\
+& + & \beta_{\text{dep}} \times \text{Dependency}_i + \beta_{\text{a}} \times \text{Architects involvements}_i\\
+\beta_{\text{prio}}, \beta_{\text{crit}}, \beta_{\text{sh}}, \beta_{\text{kc}}, \beta_{\text{dep}} & \sim & \text{Normal}(0, 0.5)\\
+\beta_{\text{b}}, \beta_{\text{c}} & \sim & \text{Dirichlet}(2,2,2) \\
+\beta_{\text{a}} & \sim &  \text{Dirichlet}(2,2,2,2) \\
+\kappa & \sim & \text{Normal}(0, 2)
+\end{eqnarray*}
+$$
+
+Let's sample from the priors only (it's enough to use one chain here), and then check against the data to see that they are wide enough.
+
+```{r m_prior, cache=TRUE, warning=FALSE, message=FALSE}
+M_prior <- brm(State ~ prio_s + crit + mo(b_val) + mo(c_val) + 
+                 sh_s + kc_s + dep + mo(arch),
+               family = cumulative,
+               data = d, prior = p, sample_prior = "only", 
+               chains = 1, control = list(adapt_delta = 0.95), 
+               refresh = 0)
+```
+
+```{r ppc_plot, cache=TRUE, fig.margin=TRUE}
+pp_check(M_prior, type = "bars", nsamples = NULL)
+```
+
+If we sample from our prior predictive distribution against our empirical data we'll see how the priors cover our data. As is evident, by looking at the intervals, our priors seems to be relaxed and should not influence the outcome.
+
+# Model inference
+
+Let's now sample our model and also include sampling of priors in case we need it later.
+
+```{r model_m, cache=TRUE, warning=FALSE, message=FALSE}
+M <- brm(State ~ prio_s + crit + mo(b_val) + mo(c_val) + 
+           sh_s + kc_s + dep + mo(arch),
+         family = cumulative,
+         data = d, prior = p, sample_prior = "yes", 
+         chains = 4, refresh = 0)
+```
 
 
+## Posterior predictive check
+
+```{r ppc, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.margin=TRUE, }
+pp_check(M, type = "bars", nsample = 100) +
+  scale_x_continuous(breaks=c(seq(1:6)), labels=as.character(levels(d$State))) +
+  theme(axis.text.x = element_text(angle=15, hjust=1))
+```
+
+Plotting our models predictions, $y_{\text{rep}}$, vs. our empirical values, $y$, we see that the model does a very good job in estimating the categories. The credible intervals are very tight, and if we want to say anything negative about the plot to the right then it is that the first and third categories seem to be underestimated and overestimated, respectively, by the model.
+
+If we look at our previous plot, where we used only priors, we can clearly see, when we compare with the plot to the right, that our data has completely swamped the priors. 
+
+## Diagnostics
+
+Our caterpillar plots look good.
+
+```{r caterpillar, cache=TRUE, echo=FALSE, fig.width=12, fig.height=8, fig.fullwidth=TRUE}
+mcmc_trace(M) + legend_none()
+```
+
+Our $\widehat{R}$ and effective sample size (neff) look good.
+
+```{r}
+# should be < 1.01
+max(rhat(M))
+
+# should be > 0.1
+min(neff_ratio(M))
+```
+
+There is no perfect model, but we could claim that is a good model.
+
+## Estimates
+
+If we now focus on our population-level estimates we see that our 'Intercepts', which in this case are the points between two categories, are very precisely estimated. However, to make sense of them we need to transform the estimates, since the values are on the $\logit$ scale. 
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+kable(round(fixef(M), digits=2), caption="Our population-level estimates (fixed effects) from our model $\\mathcal{M}$. Note that the values are on $\\logit$ scale.") %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+## Intercepts
+Let's take the first parameter, `Intercept[1]`, which was estimated to $-1.40$, i.e., 
+
+```{r} 
+inv_logit_scaled(-1.40)
+```
+
+What does `r round(inv_logit_scaled(fixef(M)[1,1]), 2)` mean? Well, we have a categorical outcome. So 20% of the probability mass, with a 95% credible interval of [`r round(inv_logit_scaled(fixef(M)[1,3]), 2)`, `r round(inv_logit_scaled(fixef(M)[1,4]), 2)`], was assigned to the first category `Elicited, Dropped`. For `Intercept[2]`, `r round(inv_logit_scaled(fixef(M)[2,1]), 2)` [`r round(inv_logit_scaled(fixef(M)[2,3]), 2)`, `r round(inv_logit_scaled(fixef(M)[2,4]), 2)`] was assigned to `Elicited, Dropped` *and* `Elicited, Prio, Dropped`.
+
+## $\beta$ estimates
+Let's turn our attention to the other estimates. The `prio_s` estimate, `r round(fixef(M)[6,1], 2)`, would then become `r round(inv_logit_scaled(fixef(M)[6,1]), 2)` when transformed. But remember the suffix `_s`! We need to multiply with $\sigma_x$  and add $\bar{x}$ from the data, which leads to an estimate of `r round(inv_logit_scaled(fixef(M)[6,1]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)` [`r round(inv_logit_scaled(fixef(M)[6,3]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`, `r round(inv_logit_scaled(fixef(M)[6,4]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`]. 
+
+However, just looking at a point estimate is, quite frankly, not terribly useful. Let's plot the posterior probability densitities for our population-level estimates (disregarding `Intercept`$[1,\ldots,5]$ and our monotonic predictors).
+
+```{r mcmc_areas, echo=FALSE}
+mcmc_areas_ridges(M, regex_pars = "^b_[a-z]", prob_outer = 1, prob = 0.95) +
+  vline_0(size=0.3)
+```
+
+Examining the above plot we can say that, on the 95% level, the first two parameters are clearly positive and do not cross $0$. The third parameter, `Stakeholders`, is clearly negative. The last two parameters are not significant, but it seems they are slightly positive, e.g., , `Key Customer` and `Dependency` has the following 95% credible intervals on the $\logit$ scale [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`] and [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`], respectively. So, traditionally, using the arbitray 95% threshold, they're considered to *not* be significant. 
+
+To conclude what we've noticed so far: `Team priority`, `Critical feature`, and `Stakeholders` are significant on $\text{CI}_{95\%}$. Let's now turn our attention to our three monotonic predictors.
+
+## Estimates of monotonic predictors
+
+Three monotonic predictors, `Business value`, `Customer value`, and `Architects involvement` were estimated by our model. 
+
+```{r monotonic_areas, echo=FALSE, fig.margin=TRUE, fig.cap="Our three monotonic predictors."}
+mcmc_areas_ridges(M, regex_pars = "^bsp", prob_outer = 1, prob = 0.95) +
+  vline_0(size=0.3)
+```
+
+It's clear by simply looking at the plot that `Business value` and `Architects involvement` are significant and positive. What's interesting is that `Customer value`, which is positive, is not significant. One would think that business value and customer value should have, approximately, the same effect, but our model claims that not to be the case. Could it be that it's harder for experts to estimate customer value, compared to business value? The whole requirements engineering community just felt a disturbance in the force &#128514;
 
 
+## Conditional effects
 
+Below we plot all conditional effects for our model. The colors represent the different categories, $1,\ldots,6$ in our outcome `State`: 
 
+1. `Elicited, Dropped`
+2. `Elicited, Prio, Dropped`
+3. `Elicited, Prio, Planned, Dropped`
+4. `Elicited, Prio, Planned, Implemented, Dropped`
+5. `Elicited, Prio, Planned, Implemented, Tested, Dropped`
+6. `Elicited, Prio, Planned, Implemented, Tested, Released`
 
-
-
-
-
-
+```{r cond_effects, echo=FALSE, cache=TRUE}
+conditional_effects(M, categorical = TRUE, )
+```
 
 
 
