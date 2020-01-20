@@ -40,7 +40,7 @@ theme_update(
 \newcommand{\logit}{\operatorname{logit}}
 
 # Introduction
-First prepare the data, check for `NAs` and look at some descriptive statistics. Since we're using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, data types changed, etc.)
+First prepare the data, check for `NAs` and look at some descriptive statistics. Since we're using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, uncompatible data types, etc.)
 ```{r}
 d <- read.xlsx("Features.xlsx", sheet = "Features")
 ```
@@ -216,7 +216,7 @@ d$arch <- d$Architects.involvement
 ```
 
 # Initial model comparison
-We compare two models (with default priors): One grand interecept null model, $\mathcal{M}_0$, and one with all predictors added, $\mathcal{M}$, to see if adding predictors makes a difference (if not, then we get depressed and conclude this matter for this time).
+We compare two models (with default priors): One grand intercept null model, $\mathcal{M}_0$, and one with all predictors added, $\mathcal{M}$, to see if adding predictors makes a difference (if not, then we get depressed and conclude this matter for this time).
 
 First sample the two models with default priors.
 
@@ -239,7 +239,7 @@ M <- add_criterion(M, criterion = "loo")
 
 `LOO` cleary puts $\mathcal{M}$ as no. 1. If we assume a $z_{\text{99%}}$-score of $2.576$ it's clear that zero is not in the interval and that $\mathcal{M}$ is better, i.e., $\text{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.576, 2)`]. We can conclude this matter by saying that adding predictors to $\mathcal{M}$ clearly has a significant effect.
 
-If we would be interested in refining our model for out of sample prediction purposes we should conduct variable selection. However, in this particulare case we are interested in each predictor's effect, so we'll keep them all.
+If we would be interested in refining our model for out of sample prediction purposes we should conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them all.
 
 # Prior predictive checks
 
@@ -247,7 +247,7 @@ Before we start to use our data to do inferences we should think about our prior
 
 First let's see what priors we would get with a full model where we include all other variables as predictors. We'll model `b_val`, `c_val`, and `arch` as montonic predictors since they are, precisely as our outcome, of an ordered categorical nature.
 
-First, we set weakly regularizing priors on $\beta$, while we set the same on our monotonic predictors. Then, after looking at different levels of priors, we can conclude that the following priors are suitable for this model.
+First, we try weakly regularizing priors on $\beta$, while we set the same on our monotonic predictors.^[Basically $\mathcal{N}(0,1)$] Then, after looking and comparing different priors we conclude that the following priors are suitable for this model.^[Providing all steps in a prior sensitivity analysis is beyond the scope of this document and seldom reported in scientific literature.]
 
 ```{r priors, warning=FALSE, message=FALSE}
 p <- get_prior(State ~ prio_s + crit + mo(b_val) + mo(c_val) + 
@@ -364,7 +364,7 @@ M_prior <- brm(State ~ prio_s + crit + mo(b_val) + mo(c_val) +
 pp_check(M_prior, type = "bars", nsamples = NULL)
 ```
 
-If we sample from our prior predictive distribution against our empirical data we'll see how the priors cover our data. As is evident, by looking at the intervals, our priors seems to be relaxed and should not influence the outcome.
+If we sample from our prior predictive distribution, $y_{\text{rep}}$, and plot it with our empirical data, $y$, we'll see how the priors cover our data. As is evident, by looking at the intervals, our priors seems to be relaxed and should not influence the outcome.
 
 # Model inference
 
@@ -387,7 +387,7 @@ pp_check(M, type = "bars", nsample = 100) +
   theme(axis.text.x = element_text(angle=15, hjust=1))
 ```
 
-Plotting our model's predictions, $y_{\text{rep}}$, vs. our empirical values, $y$, we see that the model does a very good job in estimating the categories. The credible intervals are very tight, and if we want to say anything negative about the plot to the right then it is that the first and third categories seem to be underestimated and overestimated, respectively, by the model.
+Again, plotting our model's predictions, $y_{\text{rep}}$, vs. our empirical values, $y$, we see that the model does a very good job in estimating the categories. The credible intervals are very tight, and if we want to say anything negative about the plot to the right then it is that the first and third categories seem to be slighty under- and overestimated, respectively.
 
 If we look at our previous plot, where we used only priors, we can clearly see, when we compare with the plot to the right, that our data has completely swamped the priors. 
 
@@ -413,7 +413,7 @@ There is no perfect model, but we could claim that this is a useful model.^["Ess
 
 ## Parameters
 
-If we now focus on our population-level estimates we see that our 'Intercepts', which in this case are the points between two categories, are very precisely estimated. However, to make sense of them we need to transform the estimates, since the values are on the $\logit$ scale. 
+If we now focus on our population-level estimates we see that our 'Intercepts', which in this case are the points between two categories in our outome, are very precisely estimated. However, to make sense of them we need to transform the estimates, since the values are on the $\logit$ scale. 
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 kable(round(fixef(M), digits=2), caption="Our population-level estimates (fixed effects) from our model $\\mathcal{M}$. Note that the values are on $\\logit$ scale.") %>%
@@ -426,7 +426,7 @@ Let's take the first parameter, `Intercept[1]`, which was estimated to $-1.40$, 
 inv_logit_scaled(-1.40)
 ```
 
-What does `r round(inv_logit_scaled(fixef(M)[1,1]), 2)` mean? Well, we have a categorical outcome. So `r round(inv_logit_scaled(fixef(M)[1,1]), 2) * 100`% of the probability mass, with a 95% credible interval of [`r round(inv_logit_scaled(fixef(M)[1,3]), 2)`, `r round(inv_logit_scaled(fixef(M)[1,4]), 2)`], was assigned to the first category `Elicited, Dropped`. For `Intercept[2]`, `r round(inv_logit_scaled(fixef(M)[2,1]), 2)` [`r round(inv_logit_scaled(fixef(M)[2,3]), 2)`, `r round(inv_logit_scaled(fixef(M)[2,4]), 2)`] was assigned to `Elicited, Dropped` *and* `Elicited, Prio, Dropped`.
+What does `r round(inv_logit_scaled(fixef(M)[1,1]), 2)` mean? Well, we have a categorical outcome. So `r round(inv_logit_scaled(fixef(M)[1,1]), 2) * 100`% of the probability mass, with a 95% credible interval of [`r round(inv_logit_scaled(fixef(M)[1,3]), 2)`, `r round(inv_logit_scaled(fixef(M)[1,4]), 2)`], was assigned to the first category: `Elicited, Dropped`. For `Intercept[2]`, `r round(inv_logit_scaled(fixef(M)[2,1]), 2)` [`r round(inv_logit_scaled(fixef(M)[2,3]), 2)`, `r round(inv_logit_scaled(fixef(M)[2,4]), 2)`] was assigned to: `Elicited, Dropped` **and** `Elicited, Prio, Dropped`.
 
 Let's turn our attention to the other parameters. The `prio_s` parameter, `r round(fixef(M)[6,1], 2)`, would then become `r round(inv_logit_scaled(fixef(M)[6,1]), 2)` when transformed. But remember the suffix `_s`! We need to multiply with $\sigma_x$  and add $\bar{x}$ from the data, which leads to an estimate of `r round(inv_logit_scaled(fixef(M)[6,1]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)` [`r round(inv_logit_scaled(fixef(M)[6,3]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`, `r round(inv_logit_scaled(fixef(M)[6,4]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`]. 
 
@@ -437,7 +437,7 @@ mcmc_areas_ridges(M, regex_pars = "^b_[a-z]", prob_outer = 1, prob = 0.95) +
   vline_0(size=0.3)
 ```
 
-Examining the above plot we can say that, on the 95% level, the first two parameters are clearly positive and do not cross $0$. The third parameter, `Stakeholders`, is clearly negative. The last two parameters are not significant, but it seems they are slightly positive, e.g., , `Key Customer` and `Dependency` has the following 95% credible intervals on the $\logit$ scale [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`] and [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`], respectively. So, traditionally, using the arbitray 95% threshold, they're considered to *not* be significant. 
+Examining the above plot, from top to bottom, we can say that on the 95%-level, the first two parameters are clearly positive and do not cross $0$. The third parameter, `Stakeholders`, is clearly negative. The last two parameters are not significant, but it seems they are slightly positive, e.g., , `Key Customer` and `Dependency` has the following 95% credible intervals on the $\logit$ scale [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`] and [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`], respectively. So, traditionally, using the arbitray 95% threshold, they're considered to *not* be significant. 
 
 To conclude what we've noticed so far: `Team priority`, `Critical feature`, and `Stakeholders` are significant on $\text{CI}_{95\%}$. Let's now turn our attention to our three monotonic predictors: `Business value`, `Customer value`, and `Architects involvement`. 
 
