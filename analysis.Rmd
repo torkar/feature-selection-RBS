@@ -1,6 +1,6 @@
 ---
 title: "Feature selection analysis"
-subtitle: "Companion analysis to the paper ..."
+subtitle: "Reproducibility package for the paper ..."
 author: "R. Torkar and R. Berntsson Svensson"
 date: "`r Sys.Date()`"
 output:
