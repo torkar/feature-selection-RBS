@@ -308,17 +308,17 @@ Again, plotting our model's predictions, $y_{\text{rep}}$, vs. our empirical val
 Our caterpillar plots look good for all our 21 parameters that the model estimated.
 
 ```{r caterpillar, echo=FALSE, fig.width=12, fig.height=8, fig.fullwidth=TRUE}
-mcmc_trace(M) + legend_none()
+mcmc_trace(M, regex_pars = "^b_") + legend_none()
 ```
 
 Our $\widehat{R}$ and effective sample size (neff) look good.
 
 ```{r}
 # should be < 1.01
-max(rhat(M))
+max(rhat(M), na.rm = TRUE)
 
 # should be > 0.1
-min(neff_ratio(M))
+min(neff_ratio(M), na.rm = TRUE)
 ```
 
 There is no perfect model, but we could claim that this is a useful model. We would even consider taking it out for a dinner.^["Essentially, all models are wrong, but some models are useful." &mdash;George E. P. Box]
