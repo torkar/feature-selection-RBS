@@ -220,7 +220,7 @@ d$arch <- d$Architects.involvement
 
 ## Initial model comparison
 
-First we sample a model that only has a population-level intecept (our null model, $\mathcal{M}_0$). Then we sample models using a cumulative likelihood (first w/o modeling predictors as monotonic) [@burkner19ordinal]. Once we've sampled our models we then use LOO to compare each models' relative out of sample prediction capabilities [vehtari17loo].
+First we sample a model that only has a population-level intercept (our null model, $\mathcal{M}_0$). Then we sample models using a cumulative likelihood (first w/o modeling predictors as monotonic) [@burkner19ordinal]. Once we've sampled our models we then use LOO to compare each models' relative out of sample prediction capabilities [vehtari17loo].
 
 ```{r null_model, cache=TRUE, warning=FALSE, message=FALSE}
 M0 <- brm(State ~ 1, family = cumulative, data = d, refresh = 0)
