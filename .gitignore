@@ -4,7 +4,6 @@ Features.xlsx
 .Rhistory
 .RData
 .Ruserdata
-analysis_cache/
-analysis_files/
+index_cache/
+index_files/
 .DS_Store
-analysis.html
