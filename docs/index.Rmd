@@ -222,7 +222,7 @@ d$arch <- d$Architects.involvement
 
 First we sample a model that only has a population-level intercept (our null model, $\mathcal{M}_0$). Then we sample models using a cumulative likelihood (first w/o modeling predictors as monotonic) [@burkner19ordinal]. Once we've sampled our models we then use LOO to compare each model's relative out of sample prediction capabilities [@vehtari17loo]. Since our outcome is, in all practical sense, a Likert scale variable using an adjacent category (acat) model is really not an option, the acat model is a common ordinal model in item-response theory. That leaves us with two types of models: cumulative and sequential. We'll make sue fo both and also model, when appropriate, predictors as monotonic (cumulative) or cateogry-specific (sequential) effects.
 
-```{r null_model, cache=TRUE}
+```{r null_model, cache=TRUE, warning=FALSE, message=FALSE}
 M0 <- brm(State ~ 1, family = cumulative, data = d, cores = 4, chains = 4)
 
 M1 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
@@ -299,7 +299,7 @@ Let's now sample from our model using the priors from above.
 ```{r model_m, cache=TRUE, warning=FALSE, message=FALSE}
 M <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + 
                  sh_s + kc_s + dep + cs(arch), 
-         family = sratio, data = d, prior = p, chains = 4, cores = 4, 
+         family = sratio, data = d, prior = p, chains = 4, cores = 4,
          iter = 5e3)
 ```
 
@@ -312,8 +312,6 @@ pp_check(M, type = "bars", nsample = 100) +
 ```
 
 Again, plotting our model's predictions, $y_{\text{rep}}$, vs. our empirical values, $y$, we see that the model does a good job in estimating the categories. The credible intervals are tight, and if we look at our previous plot we can clearly see, when we compare with the plot to the right, that our data has completely swamped the priors. We also see under- and overestimation in some categories but these are very minor.
-
-<!--For those so inclined, $R^2 =$`bayes_R2(M). -->
 
 ## Diagnostics
 
