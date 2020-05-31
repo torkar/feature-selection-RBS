@@ -79,7 +79,7 @@ Finally, `Dependency` is $\mathbb{Z}_2$, while `Architects.involvement` is order
 4. `Active Participation`
 5. `Joint Design`
 
-All ordered categorical predictors (independent variables) can be modeled as monotonic or category-specific effects, if necessary [@burkner20monotonic].
+All ordered categorical predictors (independent variables) can be modeled as monotonic or category specific effects, if necessary [@burkner20monotonic].
 
 ```{r}
 table(is.na(d))
@@ -249,7 +249,7 @@ Compare the models' out of sample prediction capabilities.
 (l <- loo_compare(loo(M0), loo(M1), loo(M2), loo(M3), loo(M4)))
 ```
 
-`LOO` puts $\mathcal{M}_4$ as no. 1. If we assume a $z_{\text{99%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_4$ has a clear advantage, i.e., $\text{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. We can also conclude this matter by saying that adding predictors to $\mathcal{M}_0$ *clearly* has a significant effect, but adding monotonic effects to our model does not (but adding category-specific effects definitely does).
+`LOO` puts $\mathcal{M}_4$ as no. 1. If we assume a $z_{\text{99%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_4$ has a clear advantage, i.e., $\text{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. We can also conclude this matter by saying that adding predictors to $\mathcal{M}_0$ *clearly* has a significant effect, but adding monotonic effects to our model does not (but adding category specific effects definitely does).
 
 If we would be interested in refining our model for out of sample prediction purposes we could conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them all, and decide to use $\mathcal{M}_4$ as our target model, $\mathcal{M}$, for now.
 
@@ -257,7 +257,7 @@ If we would be interested in refining our model for out of sample prediction pur
 
 Before we start to use our data to do inferences we should think about our priors. Our outcome of interest is `State`, which is ordered categorical data and as such we will model it using a sequential likelihood (as seen in the previous section).
 
-Let's see what priors we would get with a full model where we include all variables as predictors. We'll model `b_val`, `c_val`, and `arch` as category-specific effects, since the model comparison provided indications that there was a clear advantage doing that.
+Let's see what priors we would get with a full model where we include all variables as predictors. We'll model `b_val`, `c_val`, and `arch` as category specific effects, since the model comparison provided indications that there was a clear advantage doing that.
 
 We have 15 $\beta$ and 5 $\alpha$ parameters that we need to set a prior on. Since we use a $\logit$ link for our model (to translate to the probabilistic scale) it is hard to conceptually grasp the effect of our priors, i.e., we need to visualize them.
 
@@ -290,7 +290,7 @@ M_prior <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) +
 pp_check(M_prior, type = "bars", nsamples = 100)
 ```
 
-If we sample from our prior predictive distribution, $y_{\text{rep}}$, and plot it with our empirical data, $y$, we'll see how the priors cover our data. As is evident (see right), by looking at the intervals, our priors seems to be relaxed and should not influence the outcome, and in our case we have $11100$ rows so priors should not affect our outcome either way. Additionally, the priors are nearly uniform on the outcome scale, which they should be; and the only sane way to check this is to plot the combination of all priors used in a model.
+If we sample from our prior predictive distribution, $y_{\text{rep}}$, and plot it with our empirical data, $y$, we'll see how the priors cover our data. As is evident (see right), by looking at the intervals, our priors seems to be relaxed and should not influence the outcome, and in our case we have $11100$ rows of data so priors should not affect our outcome very much. 
 
 # Inference
 
@@ -308,7 +308,7 @@ M <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) +
 ```{r ppc, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.margin=TRUE}
 pp_check(M, type = "bars", nsample = 100) +
   scale_x_continuous(breaks=c(seq(1:6)), labels=as.character(levels(d$State))) +
-  theme(axis.text.x = element_text(angle=15, hjust=1))
+  theme(axis.text.x = element_text(angle=15, hjust=1), legend.position = "none")
 ```
 
 Again, plotting our model's predictions, $y_{\text{rep}}$, vs. our empirical values, $y$, we see that the model does a good job in estimating the categories. The credible intervals are tight, and if we look at our previous plot we can clearly see, when we compare with the plot to the right, that our data has completely swamped the priors. We also see under- and overestimation in some categories but these are very minor.
@@ -354,18 +354,24 @@ What does `r round(inv_logit_scaled(fixef(M)[1,1]), 2)` mean? Well, we have a or
 
 Let's turn our attention to the other parameters. The `prio_s` parameter, `r round(fixef(M)[6,1], 2)`, would then become `r round(inv_logit_scaled(fixef(M)[6,1]), 2)` when transformed. But remember the suffix `_s`! We need to multiply with $\sigma_x$  and add $\bar{x}$ from the data, which leads to an estimate of `r round(inv_logit_scaled(fixef(M)[6,1]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)` [`r round(inv_logit_scaled(fixef(M)[6,3]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`, `r round(inv_logit_scaled(fixef(M)[6,4]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`]. 
 
-However, looking at point estimates is, quite frankly, not terribly useful. Let's plot the posterior probability densitities for our population-level estimates on the $\logit$ scale, disregarding `Intercept`$[1,\ldots,5]$.
+The more exotic parameters are our category specific effects `b_val`, `c_val`, and `arch`. To our knowledge this has never been used in an analysis in software engineering or computer science. We see that each parameter that is ordinal has five category specific effects estimated (e.g., rows $11$--$15$ in the table above). These estimates indicate to what degree our variable, say `b_val`, affects the outcome `State` (remember, our outcome consisted of six ordered categorical levels). So for `b_val`, the $95$\% credible interval does not cross $0$ for the $1$st and $3$rd parameter (see the table above), and is clearly positive. 
 
-```{r mcmc_areas, echo=FALSE}
-mcmc_areas_ridges(M, regex_pars = c("b_val.L", "c_val.L", "arch.L"),
+The above means that `b_val` affects the intercepts positively between the $1$st and $2$nd categories and between the $3$rd and $4$th categories. This effect would have been impossible to measure without modeling it separately as category specific.
+
+However, looking at point estimates is, quite frankly, not terribly useful. Let's plot the posterior probability densitities for our population-level estimates on the $\logit$ scale, disregarding `Intercept`$[1,\ldots,5]$ (we are, after all, interested in the effect our predictors have on the outcome, not the outcome itself).
+
+```{r mcmc_areas, echo=FALSE, warnings=FALSE, message=FALSE}
+p <- mcmc_areas_ridges(M, regex_pars = c("b_val.L", "c_val.L", "arch.L"),
                   pars = c("b_prio_s","b_crit","b_sh_s","b_kc_s","b_dep"),
                   prob_outer = 1, prob = 0.95) +
-  vline_0(size=0.3)
+  vline_0(size=0.3) 
+p + scale_y_discrete(breaks=c("b_prio_s","b_crit","b_sh_s", "b_kc_s", "b_dep", "bcs_b_val.L[1]", "bcs_b_val.L[2]", "bcs_b_val.L[3]", "bcs_b_val.L[4]", "bcs_b_val.L[5]", "bcs_c_val.L[1]", "bcs_c_val.L[2]", "bcs_c_val.L[3]", "bcs_c_val.L[4]", "bcs_c_val.L[5]", "bcs_arch.L[1]", "bcs_arch.L[2]", "bcs_arch.L[3]", "bcs_arch.L[4]", "bcs_arch.L[5]"),
+                     labels=c("priority", "critical", "stakeholders", "key customers", "dependencies", "business value[1]", "business value[2]", "business value[3]", "business value[4]", "business value[5]", "customer value[1]", "customer value[2]", "customer value[3]", "customer value[4]", "customer value[5]", "architects[1]", "architects[2]", "architects[3]", "architects[4]", "architects[5]"))
 ```
 
-Examining the above plot, from top to bottom, we can say that on the 95%-level, the first three parameters are clearly positive or negative and do not cross $0$. The fourth parameter, `Key customers`, is not significant, with the following 95% credible intervals [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`]. The fifth parameter, `Dependencies`, is significant (positive). For our three category-specific parameters `Business value`, `Customer value`, and `Architects' involvement` we see that for some categories, e.g., for `Business value` 'No value' (Line $6$) and 'Important' (Line $8$), are significant.
+Examining the above plot, from bottom to top, we can say that on the $95$%-level, the first three parameters are clearly positive or negative and do not cross $0$. The fourth parameter, `Key customers`, is not significant, with the following $95$% credible intervals [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`]. The fifth parameter, `Dependencies`, is significant (positive) [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`]. For our three category specific parameters `Business value`, `Customer value`, and `Architects' involvement` we see that some parameters are significant, i.e., for `Business value` the parameters $[1]$ and $[4]$ and for `Customer value` parameter $[3]$. No significant parameters in `Architects' involvement`.
 
-To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakeholders`, and `Dependency` are clearly significant on $\text{CI}_{95\%}$, while for `Business value` and `Customer value` some categories are significant. `Architecture involvement` is not significant.
+To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakeholders`, and `Dependencies` are clearly significant on $\text{CI}_{95\%}$, while for `Business value` and `Customer value` some categories are significant. `Architecture involvement` and `Key customers` are not significant.
 
 ## Conditional effects
 
@@ -385,7 +391,7 @@ conditional_effects(M, categorical = TRUE)
 ## Take-aways concerning released features
 One important question we would like to have an answer to is which independent variable(s) contribute(s) more for a feature to, ultimately, be *released*, i.e., is it priority, criticality, business or customer value, number of stakeholders, number of key customers, having dependencies, and/or the level of architect involvement? In the above plots the answer to our question can be found, without even having to conduct any statistical tests or examining $p$-values.
 
-Concerning `Priority` we see that it has a very large effect for State 6 (i.e., a feature being released). The higher the priority the more probability mass is set on State $6$. In the end it has close to 70% of the probability mass, while the other states are not even close.
+Concerning `Priority` we see that it has a very large effect for State $6$ (i.e., a feature being released). The higher the priority the more probability mass is set on State $6$. In the end it has close to $70$% of the probability mass, while the other states are not even close.
 
 Concerning `Criticality` we see very much the same effect, albeit the uncertainty increases also. States $3$ and $6$ have, together, more than $50$% of the probability mass. However, one thing we clearly see in the `Stakeholders` plot is that State $6$ has very little probability mass when number of stakeholders increase, i.e., the more stakeholders the lower the probability that a feature will be released.
 
