@@ -35,15 +35,14 @@ p <- conditional_effects(M, effects = "b_val", categorical = TRUE)
 p_bval <- plot(p, plot = FALSE)[[1]] +
   scale_color_colorblind() +
   scale_fill_colorblind() +
-  xlab("Business value") +
-  theme(legend.position = "none",
-        axis.text.x = element_blank())
+  xlab("") +
+  theme(axis.text.x = element_blank())
 
 p <- conditional_effects(M, effects = "c_val", categorical = TRUE)
 p_cval <- plot(p, plot = FALSE)[[1]] +
   scale_color_colorblind() +
   scale_fill_colorblind() +
-  xlab("Customer value") +
+  xlab("") +
   theme(legend.position = "none")
 
 p_bval / p_cval
