@@ -31,3 +31,19 @@ p_dep <- plot(p, plot = FALSE)[[1]] +
 
 (p_prio | p_crit) / (p_sh | p_dep)
 
+p <- conditional_effects(M, effects = "b_val", categorical = TRUE)
+p_bval <- plot(p, plot = FALSE)[[1]] +
+  scale_color_colorblind() +
+  scale_fill_colorblind() +
+  xlab("Business value") +
+  theme(legend.position = "none",
+        axis.text.x = element_blank())
+
+p <- conditional_effects(M, effects = "c_val", categorical = TRUE)
+p_cval <- plot(p, plot = FALSE)[[1]] +
+  scale_color_colorblind() +
+  scale_fill_colorblind() +
+  xlab("Customer value") +
+  theme(legend.position = "none")
+
+p_bval / p_cval
