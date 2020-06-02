@@ -4,17 +4,14 @@ library(rethinking)
 # State
 # par(mar = c(5.1, 4.1, 4.1, 2.1))
 simplehist(as.numeric(d$State), xlab="State", bty="n", xaxt = "n", ylab="")
-axis(1, labels = c(expression(italic(t)[0]), expression(italic(t)[1]),
-                   expression(italic(t)[2]), expression(italic(t)[3]),
-                   expression(italic(t)[4]), expression(italic(t)[5])),
-     at = 1:6)
+axis(1, labels = c(1,2,3,4,5,6), at = 1:6)
 
-text(x = 1.2, y = 3000, "3032")
+text(x = 1.25, y = 3000, "3032")
 text(x = 2, y = 2490, "2290")
 text(x = 3, y = 2130, "1930")
 text(x = 4, y = 753, "553")
 text(x = 5, y = 280, "80")
-text(x = 5.8, y = 3000, "3225")
+text(x = 5.75, y = 3000, "3225")
 
 # Prio
 simplehist(as.numeric(d$Team.priority), xlab="Priority", bty = "n", xaxt = "n", 
