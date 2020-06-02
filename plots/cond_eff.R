@@ -12,7 +12,8 @@ p_crit <- plot(p, plot = FALSE)[[1]] +
   scale_color_colorblind() +
   scale_fill_colorblind() +
   xlab("Criticality") +
-  ylab("")
+  ylab("") +
+  scale_x_continuous(breaks=seq(0,1))
 
 p <- conditional_effects(M, effects = "sh_s", categorical = TRUE)
 p_sh <- plot(p, plot = FALSE)[[1]] +
@@ -25,9 +26,10 @@ p <- conditional_effects(M, effects = "dep", categorical = TRUE)
 p_dep <- plot(p, plot = FALSE)[[1]] +
   scale_color_colorblind() +
   scale_fill_colorblind() +
-  xlab("Num. dependencies") +
+  xlab("Dependency") +
   ylab("") +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  scale_x_continuous(breaks=seq(0,1))
 
 (p_prio | p_crit) / (p_sh | p_dep)
 
