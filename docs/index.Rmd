@@ -220,7 +220,7 @@ d$arch <- d$Architects.involvement
 
 ## Initial model comparison
 
-First we sample a model that only has a population-level intercept (our null model, $\mathcal{M}_0$). Then we sample models using a cumulative likelihood (first w/o modeling predictors as monotonic) [@burkner19ordinal]. Once we've sampled our models we then use LOO to compare each model's relative out of sample prediction capabilities [@vehtari17loo]. Since our outcome is, in all practical sense, a Likert scale variable using an adjacent category (acat) model is really not an option, the acat model is a common ordinal model in item-response theory. That leaves us with two types of models: cumulative and sequential. We'll make sue fo both and also model, when appropriate, predictors as monotonic (cumulative) or cateogry-specific (sequential) effects.
+First we sample a model that only has a population-level intercept (our null model, $\mathcal{M}_0$). Then we sample models using a cumulative likelihood (first w/o modeling predictors as monotonic) [@burkner19ordinal]. Once we've sampled our models we then use LOO to compare each model's relative out of sample prediction capabilities [@vehtari17loo]. Since our outcome is, in all practical sense, a Likert scale variable using an adjacent category (acat) model is really not an option, the acat model is a common ordinal model in item-response theory. That leaves us with two types of models: cumulative and sequential. We'll make sure to check both and also model, when appropriate, predictors as monotonic (cumulative) or category-specific (sequential) effects.
 
 ```{r null_model, cache=TRUE, warning=FALSE, message=FALSE}
 M0 <- brm(State ~ 1, family = cumulative, data = d, cores = 4, chains = 4)
