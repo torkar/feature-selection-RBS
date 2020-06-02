@@ -67,10 +67,11 @@ simplehist(d$Key.customers, xlab = "Number of key customers", bty= "n",
 # 9106 2004
 
 # arch involvement
+# par(mar = c(10, 4.1, 4.1, 2.1))
 simplehist(as.numeric(d$Architects.involvement), 
-           xlab = "Architects' involvement", bty= "n", xaxt = "n", ylab = "")
+           xlab = "", bty= "n", xaxt = "n", ylab = "")
 axis(1, labels = FALSE)
-
+title(xlab="Architects' involvement", line = 3.5)
 text(x = 1:5, y = par("usr")[3] -1000,
      xpd = NA, 
      labels =c("None", "Simple", "Monitoring", "Active part.", "Joint design"))
