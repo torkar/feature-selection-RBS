@@ -290,7 +290,7 @@ M_prior <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) +
 pp_check(M_prior, type = "bars", nsamples = 100)
 ```
 
-If we sample from our prior predictive distribution, $y_{\text{rep}}$, and plot it with our empirical data, $y$, we'll see how the priors cover our data. As is evident (see right), by looking at the intervals, our priors seems to be relaxed and should not influence the outcome, and in our case we have $11100$ rows of data so priors should not affect our outcome very much. 
+If we sample from our prior predictive distribution, $y_{\text{rep}}$, and plot it with our empirical data, $y$, we'll see how the priors cover our data. As is evident (see right), by looking at the intervals, our priors seems to be relaxed and should not influence the outcome, and in our case we have $11100$ rows of data so priors should not affect our outcome very much. The priors are also set up so more probability mass is set to the earlier stages since it's basically a survival model, i.e., a feature needs to survive in order to reach the next stage.
 
 # Inference
 
@@ -305,7 +305,7 @@ M <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) +
 
 ## Posterior predictive check
 
-```{r ppc, echo=FALSE, cache=TRUE, warning=FALSE, message=FALSE, fig.margin=TRUE}
+```{r ppc, echo=FALSE, warning=FALSE, message=FALSE, fig.margin=TRUE}
 pp_check(M, type = "bars", nsample = 100) +
   scale_x_continuous(breaks=c(seq(1:6)), labels=as.character(levels(d$State))) +
   theme(axis.text.x = element_text(angle=15, hjust=1), legend.position = "none")
@@ -327,7 +327,7 @@ Our $\widehat{R}$ and effective sample size (neff) look good.
 # should be < 1.01
 max(rhat(M), na.rm = TRUE)
 
-# should be > 0.1
+# should be > 0.1 
 min(neff_ratio(M), na.rm = TRUE)
 ```
 
