@@ -8,4 +8,4 @@ This repository contains scripts to replicate the method used in the manuscript.
 
 Finally, one can always look at the replication package directly [online](https://torkar.github.io/feature-selection-RBS/).
 
-In case of questions please contact [Richard Torkar](mailto:torkarr@chalmers.se?subject=[GitHub]%20Feature%20Selection)
+In case of questions please contact [Richard Torkar](mailto:torkarr@chalmers.se?subject=[GitHub]%20Feature%20Selection).
