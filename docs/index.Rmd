@@ -225,7 +225,7 @@ d$arch <- d$Architects.involvement
 
 First we sample a model that only has a population-level intercept (our null model, $\mathcal{M}_0$). Then we sample models using a cumulative likelihood (first w/o modeling predictors as monotonic) [@burkner19ordinal]. Once we've sampled our models we then use LOO to compare each model's relative out of sample prediction capabilities [@vehtari17loo]. Since our outcome is, in all practical sense, a Likert scale variable using an adjacent category (acat) model is really not an option, the acat model is a common ordinal model in item-response theory. That leaves us with two types of models: cumulative and sequential. We'll make sure to check both and also model, when appropriate, predictors as monotonic (cumulative) or category-specific (sequential) effects.
 
-```{r null_model, warning=FALSE, message=FALSE}
+```{r null_model, cache=TRUE, warning=FALSE, message=FALSE}
 M0 <- brm(State ~ 1, family = cumulative, data = d, cores = 4, chains = 4)
 
 M1 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
@@ -282,7 +282,7 @@ p$prior[17] <- "normal(0, 2)"
 
 Let's sample from the priors only (it's enough to use one chain here), and then check against the data to see that they are wide enough (but not too wide!)
 
-```{r m_prior, warning=FALSE, message=FALSE}
+```{r m_prior, cache=TRUE, warning=FALSE, message=FALSE}
 M_prior <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + 
                  sh_s + kc_s + dep + cs(arch),
           family = sratio, data = d, prior = p, sample_prior = "only", 
@@ -299,7 +299,7 @@ If we sample from our prior predictive distribution, $y_{\text{rep}}$, and plot 
 
 Let's now sample from our model using the priors from above.
 
-```{r model_m, warning=FALSE, message=FALSE}
+```{r model_m, cache=TRUE, warning=FALSE, message=FALSE}
 M <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + 
                  sh_s + kc_s + dep + cs(arch), 
          family = sratio, data = d, prior = p, chains = 4, cores = 4,
