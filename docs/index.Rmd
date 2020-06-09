@@ -253,7 +253,7 @@ Compare the models' out of sample prediction capabilities.
 (l <- loo_compare(loo(M0), loo(M1), loo(M2), loo(M3), loo(M4)))
 ```
 
-`LOO` puts $\mathcal{M}_4$ as no. 1. If we assume a $z_{\text{99%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_4$ has a clear advantage, i.e., $\text{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. We can also conclude this matter by saying that adding predictors to $\mathcal{M}_0$ *clearly* has a significant effect, but adding monotonic effects to our model does not (but adding category specific effects definitely does).
+`LOO` puts $\mathcal{M}_4$ as no. 1. If we assume a $z_{\mathrm{99%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_4$ has a clear advantage, i.e., $\mathrm{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. We can also conclude this matter by saying that adding predictors to $\mathcal{M}_0$ *clearly* has a significant effect, but adding monotonic effects to our model does not (but adding category specific effects definitely does).
 
 If we would be interested in refining our model for out of sample prediction purposes we could conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them all, and decide to use $\mathcal{M}_4$ as our target model, $\mathcal{M}$, for now.
 
@@ -294,7 +294,7 @@ M_prior <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) +
 pp_check(M_prior, type = "bars", nsamples = 100)
 ```
 
-If we sample from our prior predictive distribution, $y_{\text{rep}}$, and plot it with our empirical data, $y$, we'll see how the priors cover our data. As is evident (see right), by looking at the intervals, our priors seems to be relaxed and should not influence the outcome, and in our case we have $11100$ rows of data so priors should not affect our outcome very much. The priors are also set up so more probability mass is set to the earlier stages since it's basically a survival model, i.e., a feature needs to survive in order to reach the next stage.
+If we sample from our prior predictive distribution, $y_{\mathrm{rep}}$, and plot it with our empirical data, $y$, we'll see how the priors cover our data. As is evident (see right), by looking at the intervals, our priors seems to be relaxed and should not influence the outcome, and in our case we have $11100$ rows of data so priors should not affect our outcome very much. The priors are also set up so more probability mass is set to the earlier stages since it's basically a survival model, i.e., a feature needs to survive in order to reach the next stage.
 
 # Inference
 
@@ -315,7 +315,7 @@ pp_check(M, type = "bars", nsample = 100) +
   theme(axis.text.x = element_text(angle=15, hjust=1), legend.position = "none")
 ```
 
-Again, plotting our model's predictions, $y_{\text{rep}}$, vs. our empirical values, $y$, we see that the model does a good job in estimating the categories. The credible intervals are tight, and if we look at our previous plot we can clearly see, when we compare with the plot to the right, that our data has completely swamped the priors. We also see under- and overestimation in some categories but these are very minor.
+Again, plotting our model's predictions, $y_{\mathrm{rep}}$, vs. our empirical values, $y$, we see that the model does a good job in estimating the categories. The credible intervals are tight, and if we look at our previous plot we can clearly see, when we compare with the plot to the right, that our data has completely swamped the priors. We also see under- and overestimation in some categories but these are very minor.
 
 ## Diagnostics
 
@@ -373,7 +373,7 @@ p + scale_y_discrete(breaks=c("b_prio_s","b_crit","b_sh_s", "b_kc_s", "b_dep", "
 
 Examining the above plot, from bottom to top, we can say that on the $95$%-level, the first three parameters are clearly positive or negative and do not cross $0$. The fourth parameter, `Key customers`, is not significant, with the following $95$% credible intervals [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`]. The fifth parameter, `Dependencies`, is significant (positive) [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`]. For our three category specific parameters `Business value`, `Customer value`, and `Architects' involvement` we see that some parameters are significant, i.e., for `Business value` the parameters $[1]$ and $[4]$ and for `Customer value` parameter $[3]$. No significant parameters in `Architects' involvement`.
 
-To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakeholders`, and `Dependencies` are clearly significant on $\text{CI}_{95\%}$, while for `Business value` and `Customer value` some categories are significant. `Architecture involvement` and `Key customers` are not significant.
+To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakeholders`, and `Dependencies` are clearly significant on $\mathrm{CI}_{95\%}$, while for `Business value` and `Customer value` some categories are significant. `Architecture involvement` and `Key customers` are not significant.
 
 ## Conditional effects
 
