@@ -41,6 +41,7 @@ theme_update(
 \newcommand{\logit}{\operatorname{logit}}
 
 > "Personally, I round all $p$-values to the nearest integer."
+
 >               --- Richard McElreath
 
 # Introduction
