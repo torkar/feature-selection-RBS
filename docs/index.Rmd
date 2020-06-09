@@ -253,7 +253,7 @@ Compare the models' out of sample prediction capabilities.
 (l <- loo_compare(loo(M0), loo(M1), loo(M2), loo(M3), loo(M4)))
 ```
 
-`LOO` puts $\mathcal{M}_4$ as no. 1. If we assume a $z_{\mathrm{99%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_4$ has a clear advantage, i.e., $\mathrm{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. We can also conclude this matter by saying that adding predictors to $\mathcal{M}_0$ *clearly* has a significant effect, but adding monotonic effects to our model does not (but adding category specific effects definitely does).
+`LOO` puts $\mathcal{M}_4$ as no. 1. If we assume a $z_{\mathrm{99\%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_4$ has a clear advantage, i.e., $\mathrm{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. We can also conclude this matter by saying that adding predictors to $\mathcal{M}_0$ *clearly* has a significant effect, but adding monotonic effects to our model does not (but adding category specific effects definitely does).
 
 If we would be interested in refining our model for out of sample prediction purposes we could conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them all, and decide to use $\mathcal{M}_4$ as our target model, $\mathcal{M}$, for now.
 
