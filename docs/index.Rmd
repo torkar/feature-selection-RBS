@@ -41,7 +41,7 @@ theme_update(
 \newcommand{\logit}{\operatorname{logit}}
 
 > "Personally, I round all $p$-values to the nearest integer."
-> `r tufte::quote_footer('--- Richard McElreath')`
+>               --- Richard McElreath
 
 # Introduction
 First prepare the data, check for `NAs` and look at some descriptive statistics. Since we're using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, uncompatible data types, etc.)
@@ -402,7 +402,7 @@ Concerning `Criticality` we see very much the same effect, albeit the uncertaint
 
 Finally, for `Architects involvement` we see that the probability for State $6$ increases when going from `none` to `Simple`, but then it remains virtually the same for the other categories.
 
-In short, `Priority` and `Criticality` have the largest effects, while the rest don't matter all too much.
+In short, `Priority` and `Criticality` have the largest effects, while the rest don't matter all too much. We don't even need a test to see that.
 
 
 
