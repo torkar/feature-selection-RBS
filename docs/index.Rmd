@@ -47,7 +47,7 @@ theme_update(
 # Introduction
 First prepare the data, check for `NAs` and look at some descriptive statistics. Since we’re using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, uncompatible data types, etc.)
 ```{r}
-d <- read.xlsx("Features.xlsx", sheet = "Features")
+d <- read.xlsx("data/Features.xlsx", sheet = "Features")
 ```
 
 This is how the data looks like. In short, $11110$ rows and $10$ variables.
