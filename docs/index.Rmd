@@ -48,10 +48,10 @@ theme_update(
 First prepare the data, check for `NAs` and look at some descriptive statistics. Since we’re using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, incompatible data types, etc.)
 
 ```{r}
-d <- read.xlsx("../data/Features.xlsx", sheet = "Features")
+d <- read.xlsx("data/Features.xlsx", sheet = "Features")
 ```
 
-The data we load above are the empirical data which is under NDA and unfortunately not generally available. In order to load the synthetic data we instead load it directly into memory, i.e., `d <- readRDS("../data/data.rds")`, and then you can continue run the below commands as-is (with slightly different results obviously).
+The data we load above are the empirical data which is under NDA and unfortunately not generally available. In order to load the synthetic data we instead load it directly into memory, i.e., `d <- readRDS("data/data.rds")`, and then you can continue run the below commands as-is (with slightly different results obviously).
 
 This is how the data looks like. In short, $11110$ rows and $10$ variables.
 
