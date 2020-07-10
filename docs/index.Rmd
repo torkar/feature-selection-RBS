@@ -18,7 +18,10 @@ header-includes:
 library(tufte)
 # invalidate cache when the tufte version changes
 knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
+
 options(htmltools.dir.version = FALSE)
+
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 
 library(openxlsx)
 library(ggplot2)
@@ -48,7 +51,7 @@ theme_update(
 First prepare the data, check for `NAs` and look at some descriptive statistics. Since we’re using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, incompatible data types, etc.)
 
 ```{r}
-d <- read.xlsx("../data/Features.xlsx", sheet = "Features")
+d <- read.xlsx("data/Features.xlsx", sheet = "Features")
 ```
 
 The data we load above are the empirical data which is under NDA and unfortunately not generally available. In order to load the synthetic data we instead load it directly into memory, i.e., `d <- readRDS("data/data.rds")`, but we do it later down below.
@@ -227,7 +230,7 @@ d$arch <- d$Architects.involvement
 If we instead want to use the synthetic data then we load it as this,
 
 ```{r, eval=FALSE}
-d <- readRDS("../data/data.rds")
+d <- readRDS("data/data.rds")
 ```
 
 ## Initial model comparison
