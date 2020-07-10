@@ -1,6 +1,20 @@
 # Feature selection in requirements engineering
 
-This repository contains scripts and data for replication and evaluation of the methodology used in the manuscript. Unfortunately, due to non-disclosure agreement, the authors are not allowed to release the empirical data as-is. However, in the plots and data description sections one can see the input given to the model development steps. Hence, it is easy to simulate data in order to verify our methodology. This we have done.
+## Docker
+
+If you want to replicate the results from the replication package in an easy way, we recommend to install `Docker`, give it plenty of RAM and CPU, and then run the following in the terminal,
+
+```{bash}
+docker run -d -p 8787:8787 -e PASSWORD=foo -e ROOT=TRUE torkar/docker_bda:feature_selection
+```
+
+Then point your browser to <http://localhost:8787>, enter `rstudio` as username and `foo` as password (change password above to whatever you want). In the browser you now have `RStudio`, and a first step would be to go (lower-right corner) to the directory `development/feature_selection/` and click on the project file `Feature Selection RBS.Rproj`, to load the project.
+
+Next, perhaps open the file `docs/index.Rmd` which you then can `knit`, i.e., re-run analysis and generate the output `index.html` (which is also published at <https://torkar.github.io/affective_states/>).
+
+## Replication package and synthetic data
+
+The repository contains scripts and data for replication and evaluation of the methodology used in the manuscript. Unfortunately, due to non-disclosure agreement, the authors are not allowed to release the empirical data as-is. However, in the plots and data description sections one can see the input given to the model development steps. Hence, it is easy to simulate data in order to verify our methodology. This we have done.
 
 We provide a synthetic data set, which an interested reader could make use of to follow our analysis as presented in the replication package.
 
@@ -12,7 +26,7 @@ d <- readRDS("data/data.rds")
 
 and then go through any selected steps you prefer as found in [docs/index.Rmd](https://github.com/torkar/feature-selection-RBS/tree/master/docs/index.Rmd).
 
-[docs/](https://github.com/torkar/feature-selection-RBS/tree/master/docs) contains the replication package. The easiest way to access this is to simply clone this repository and use `RStudio` to load the file `Feature Selection RBS.Rproj` (word of warning, we use `Stan`, `brms`, etc. so there's a lot to install and configure). Then one can go through every step we've taken in `index.Rmd`. If one knits the `Rmd` file, a `html` file will be generated (the latest one can be found [published](https://torkar.github.io/feature-selection-RBS/)).
+[docs/](https://github.com/torkar/feature-selection-RBS/tree/master/docs) contains the replication package (word of warning, we use `Stan`, `brms`, etc. so there's a lot to install and configure so we recommend using `Docker`).
 
 [plots/](https://github.com/torkar/feature-selection-RBS/tree/master/plots) contains plots as found in the manuscript (in addition to some that have not been included in order to save space).
 
