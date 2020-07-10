@@ -294,7 +294,7 @@ if (window.hljs) {
 <h1>Introduction</h1>
 <p>First prepare the data, check for <code>NAs</code> and look at some descriptive statistics. Since we’re using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, incompatible data types, etc.)</p>
 <pre class="r"><code>d &lt;- read.xlsx(&quot;../data/Features.xlsx&quot;, sheet = &quot;Features&quot;)</code></pre>
-<p>The data we load above are the empirical data which is under NDA and unfortunately not generally available. In order to load the synthetic data we instead load it directly into memory, i.e., <code>d &lt;- readRDS(&quot;../data/data.rds&quot;)</code>, and then you can continue run the below commands as-is (with slightly different results obviously).</p>
+<p>The data we load above are the empirical data which is under NDA and unfortunately not generally available. In order to load the synthetic data we instead load it directly into memory, i.e., <code>d &lt;- readRDS(&quot;data/data.rds&quot;)</code>, but we do it later down below.</p>
 <p>This is how the data looks like. In short, <span class="math inline">\(11110\)</span> rows and <span class="math inline">\(10\)</span> variables.</p>
 <pre class="r"><code>str(d)</code></pre>
 <pre><code>## &#39;data.frame&#39;:    11110 obs. of  10 variables:
@@ -455,6 +455,8 @@ d$b_val &lt;- d$Business.value
 d$c_val &lt;- d$Customer.value
 d$dep &lt;- d$Dependency
 d$arch &lt;- d$Architects.involvement</code></pre>
+<p>If we instead want to use the synthetic data then we load it as this,</p>
+<pre class="r"><code>d &lt;- readRDS(&quot;../data/data.rds&quot;)</code></pre>
 </div>
 <div id="initial-model-comparison" class="section level2">
 <h2>Initial model comparison</h2>
