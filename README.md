@@ -10,7 +10,7 @@ docker run -d -p 8787:8787 -e PASSWORD=foo -e ROOT=TRUE torkar/docker_bda:featur
 
 Then point your browser to <http://localhost:8787>, enter `rstudio` as username and `foo` as password (change password above to whatever you want). In the browser you now have `RStudio`, and a first step would be to go (lower-right corner) to the directory `development/feature_selection/` and click on the project file `Feature Selection RBS.Rproj`, to load the project.
 
-Next, perhaps open the file `docs/index.Rmd` which you then can `knit`, i.e., re-run analysis and generate the output `index.html` (which is also published at <https://torkar.github.io/affective_states/>).
+Next, perhaps open the file `docs/index.Rmd` which you then can `knit`, i.e., re-run analysis and generate the output `index.html` (which is also published at <https://torkar.github.io/feature-selection-RBS/>).
 
 ## Replication package and synthetic data
 
