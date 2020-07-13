@@ -135,17 +135,6 @@ d$Dependency <- ifelse(d$Dependency == 'Yes', 1, 0)
 
 ```
 
-## Synthetic data
-
-Above we have loaded the empirical data, which is under NDA. However, one can use synthetic data to evaluate our approach,
-
-```{r, eval=FALSE}
-d <- readRDS("data/data.rds")
-```
-
-The above line is currently not executed, since we run this analysis with the empirical data. However, if one wants to evaluate our approach, then using synthetic data is the only way, and simply executing the `setup` chunk in the source code, and then loading the synthetic data, above, will allow you to then continue executing the below analysis as-is.
-
-In the remainder of this analysis we show only the results from using the empirical data.
 
 ## Descriptive statistics
 
@@ -273,6 +262,18 @@ Compare the models’ out of sample prediction capabilities.
 `LOO` puts $\mathcal{M}_4$ as no. 1. If we assume a $z_{\mathrm{99\%}}$-score of $2.58$ it’s clear that zero is not in the interval and that $\mathcal{M}_4$ has a clear advantage, i.e., $\mathrm{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. We can also conclude this matter by saying that adding predictors to $\mathcal{M}_0$ *clearly* has a significant effect, but adding monotonic effects to our model does not (but adding category specific effects definitely does).
 
 If we would be interested in refining our model for out of sample prediction purposes we could conduct variable selection. However, in this particular case we are interested in each predictor’s effect, so we’ll keep them all, and decide to use $\mathcal{M}_4$ as our target model, $\mathcal{M}$, for now.
+
+## Synthetic data
+
+Above we have used the empirical data, which is under NDA. However, one can use synthetic data to evaluate our approach,
+
+```{r, eval=FALSE}
+d <- readRDS("data/data.rds")
+```
+
+The above line is currently not executed, since we will continue to run this analysis with the empirical data. However, if one wants to evaluate our approach, then using synthetic data is the only way. Simply executing the `setup` chunk (first chunk) in the source code, and then loading the synthetic data, above, will allow you to then continue executing the below analysis as-is.
+
+In the remainder of this analysis we show only the results from using the empirical data.
 
 ## Prior predictive checks
 

@@ -5,8 +5,8 @@ library(openxlsx)
 d <- read.xlsx("data/Features.xlsx", sheet = "Features")
 
 # keep only 5% of the rows
-size = nrow(d) - (nrow(d) * 0.95)
-d <- d[sample(nrow(d), size), ]
+#size = nrow(d) - (nrow(d) * 0.95)
+#d <- d[sample(nrow(d), size), ]
 
 # Make factors ordered 
 d$State <- factor(d$State, 
@@ -42,8 +42,6 @@ d$Architects.involvement <- factor(d$Architects.involvement,
 
 
 ### data synthesis
-
-# data synthesis 
 # * sample is regular sampling
 # * polr is for ordered categorical (multinomial)
 # * cart for the rest of the data types
@@ -83,5 +81,3 @@ e <- readRDS("data/data.rds")
 
 # Check that it worked
 stopifnot(identical(d,e) == TRUE)
-
-
