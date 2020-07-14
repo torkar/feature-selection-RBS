@@ -12,7 +12,7 @@
 
 <meta name="author" content="R. Torkar and R. Berntsson Svensson" />
 
-<meta name="date" content="2020-07-10" />
+<meta name="date" content="2020-07-14" />
 
 <title>Feature selection analysis</title>
 
@@ -279,7 +279,7 @@ if (window.hljs) {
 <h1 class="title toc-ignore">Feature selection analysis</h1>
 <h3 class="subtitle">Reproducibility package for the paper …</h3>
 <h4 class="author">R. Torkar and R. Berntsson Svensson</h4>
-<h4 class="date">2020-07-10</h4>
+<h4 class="date">2020-07-14</h4>
 
 
 
@@ -374,13 +374,6 @@ d$Architects.involvement &lt;- factor(d$Architects.involvement,
 # binary
 d$Critical.feature &lt;- ifelse(d$Critical.feature == &#39;Yes&#39;, 1, 0)
 d$Dependency &lt;- ifelse(d$Dependency == &#39;Yes&#39;, 1, 0)</code></pre>
-<div id="synthetic-data" class="section level2">
-<h2>Synthetic data</h2>
-<p>Above we have loaded the empirical data, which is under NDA. However, one can use synthetic data to evaluate our approach,</p>
-<pre class="r"><code>d &lt;- readRDS(&quot;data/data.rds&quot;)</code></pre>
-<p>The above line is currently not executed, since we run this analysis with the empirical data. However, if one wants to evaluate our approach, then using synthetic data is the only way, and simply executing the <code>setup</code> chunk in the source code, and then loading the synthetic data, above, will allow you to then continue executing the below analysis as-is.</p>
-<p>In the remainder of this analysis we show only the results from using the empirical data.</p>
-</div>
 <div id="descriptive-statistics" class="section level2">
 <h2>Descriptive statistics</h2>
 <p>
@@ -497,6 +490,13 @@ M4 &lt;- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) +
 ## M0 -3320.0      63.9</code></pre>
 <p><code>LOO</code> puts <span class="math inline">\(\mathcal{M}_4\)</span> as no. 1. If we assume a <span class="math inline">\(z_{\mathrm{99\%}}\)</span>-score of <span class="math inline">\(2.58\)</span> it’s clear that zero is not in the interval and that <span class="math inline">\(\mathcal{M}_4\)</span> has a clear advantage, i.e., <span class="math inline">\(\mathrm{CI}_{z_{99\%}}\)</span> [-80.33, -9.6]. We can also conclude this matter by saying that adding predictors to <span class="math inline">\(\mathcal{M}_0\)</span> <em>clearly</em> has a significant effect, but adding monotonic effects to our model does not (but adding category specific effects definitely does).</p>
 <p>If we would be interested in refining our model for out of sample prediction purposes we could conduct variable selection. However, in this particular case we are interested in each predictor’s effect, so we’ll keep them all, and decide to use <span class="math inline">\(\mathcal{M}_4\)</span> as our target model, <span class="math inline">\(\mathcal{M}\)</span>, for now.</p>
+</div>
+<div id="synthetic-data" class="section level2">
+<h2>Synthetic data</h2>
+<p>Above we have used the empirical data, which is under NDA. However, one can use synthetic data to evaluate our approach,</p>
+<pre class="r"><code>d &lt;- readRDS(&quot;data/data.rds&quot;)</code></pre>
+<p>The above line is currently not executed, since we will continue to run this analysis with the empirical data. However, if one wants to evaluate our approach, then using synthetic data is the only way. Simply executing the <code>setup</code> chunk (first chunk) in the source code, and then loading the synthetic data, above, will allow you to then continue executing the below analysis as-is.</p>
+<p>In the remainder of this analysis we show only the results from using the empirical data.</p>
 </div>
 <div id="prior-predictive-checks" class="section level2">
 <h2>Prior predictive checks</h2>
