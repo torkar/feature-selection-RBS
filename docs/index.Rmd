@@ -54,7 +54,7 @@ First prepare the data, check for `NAs` and look at some descriptive statistics.
 d <- read.xlsx("data/Features.xlsx", sheet = "Features")
 ```
 
-The data we load above are the empirical data, which is under NDA and unfortunately not generally available. In order to load the synthetic data we instead load it directly into memory, i.e., `d <- readRDS("data/data.rds")`, but we do it later down below, so please stay with us for now.
+The data we load above is the empirical data, which is under NDA and unfortunately not generally available. In order to load the synthetic data we instead load it directly into memory, i.e., `d <- readRDS("data/data.rds")`, but we do it later down below, so please stay with us for the time being.
 
 This is how the empirical data looks like. In short, $11110$ rows and $10$ variables.
 
@@ -94,7 +94,7 @@ All ordered categorical predictors (independent variables) can be modeled as mon
 table(is.na(d))
 ```
 
-No `NAs` in the dataset. However, that doesn't mean that we don't have `NAs`. Some of the coding can be a representation of `NA`, e.g., 'No value'. In this particular case we know that 'No value' and 'None' in the data set actually are values and not a representation of `NA`.
+No `NAs` in the dataset. However, that doesn't necessarily mean that we don't have `NAs`. Some of the coding can be a representation of `NA`, e.g., 'No value'. In this particular case we know that 'No value' and 'None' in the dataset actually are values and not a representation of `NA`.
 
 Finally, we set correct data types on all predictors.
 
@@ -222,7 +222,7 @@ d$prio_s <- scale(d$Team.priority)
 d$sh_s <- scale(d$Stakeholders)
 d$kc_s <- scale(d$Key.customers)
 
-# abbreviate names
+# only abbreviate names
 d$crit <- d$Critical.feature
 d$b_val <- d$Business.value
 d$c_val <- d$Customer.value
@@ -232,34 +232,58 @@ d$arch <- d$Architects.involvement
 
 ## Initial model comparison
 
-First we sample a model that only has a population-level intercept (our null model, $\mathcal{M}_0$). Then we sample models using a cumulative likelihood (first w/o modeling predictors as monotonic) [@burkner19ordinal]. Once we've sampled our models we then use LOO to compare each model's relative out of sample prediction capabilities [@vehtari17loo]. Since our outcome is, in all practical sense, a Likert scale variable using an adjacent category (acat) model is really not an option.^[The acat model is a common ordinal model in item-response theory] That leaves us with two types of models: cumulative and sequential. We'll make sure to try both and also model, when appropriate, predictors as monotonic (cumulative) or category-specific (sequential) effects.
+Since our outcome is, in all practical sense, a Likert scale variable using an adjacent category (acat) model is really not an option.^[The acat model is a common ordinal model in item-response theory] That leaves us with two other types of models: cumulative and sequential. We'll make sure to try both and also model, when appropriate, predictors as monotonic (cumulative) or category-specific (sequential) effects [@burkner20monotonic].
+
+First we sample a model that only has a population-level intercept (our null model, $\mathcal{M}_0$). Then we sample two models using a cumulative likelihood (without and with monotonic predictors, i.e., $\mathcal{M}_1$ and $\mathcal{M}_2$, respectively) [@burkner19ordinal]. Finally, we sample two models using the  Once we've sampled our models we then use LOO to compare each model's relative out of sample prediction capabilities [@vehtari17loo].
 
 ```{r null_model, cache=TRUE, warning=FALSE, message=FALSE}
-M0 <- brm(State ~ 1, family = cumulative, data = d, cores = 4, chains = 4, threads = threading(4))
 
+# simplest cumulative model we can think of
+M0 <- brm(State ~ 1, family = cumulative, data = d, cores = 4, chains = 4, 
+          threads = threading(4))
+
+# cumulative model with our covariates
 M1 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
-          family = cumulative, data = d, cores = 4, chains = 4, threads = threading(4))
+          family = cumulative, data = d, cores = 4, chains = 4, 
+          threads = threading(4))
 
-# Since it's cumulative likelihood we could model as monotonic.
+# since it's cumulative likelihood we could model ordered categorical predictors
+# as monotonic
 M2 <- brm(State ~ 1 + prio_s + crit + mo(b_val) + mo(c_val) + 
                  sh_s + kc_s + dep + mo(arch),
-          family = cumulative, data = d, cores = 4, chains = 4, threads = threading(4))
+          family = cumulative, data = d, cores = 4, chains = 4, 
+          threads = threading(4))
 
+# sequential model
 M3 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + 
                  sh_s + kc_s + dep + arch,
-          family = sratio(), data = d, cores = 4, chains = 4, threads = threading(4))
+          family = sratio(), data = d, cores = 4, chains = 4, 
+          threads = threading(4))
 
-# or as a category-specific effects
+# seq. model w/ category-specific effects
 M4 <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + 
                  sh_s + kc_s + dep + cs(arch),
-          family = sratio(), data = d, cores = 4, chains = 4, threads = threading(4))
+          family = sratio(), data = d, cores = 4, chains = 4, 
+          threads = threading(4))
+
+# adjacent category model
+M5 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + 
+                 sh_s + kc_s + dep + arch,
+          family = acat(), data = d, cores = 4, chains = 4, 
+          threads = threading(4))
+
+# w/ category-specific effects
+M6 <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + 
+                 sh_s + kc_s + dep + cs(arch),
+          family = acat(), data = d, cores = 4, chains = 4, 
+          threads = threading(4))
 ```
 
 Compare the models' out of sample prediction capabilities.
 
-```{r loo_comp, cache=TRUE, warnings=FALSE, message=FALSE}
+```{r loo_comp, cache=TRUE}
 # run it with reloo=TRUE, but the results are still ok
-(l <- loo_compare(loo(M0), loo(M1), loo(M2), loo(M3), loo(M4)))
+(l <- loo_compare(loo(M0), loo(M1), loo(M2), loo(M3), loo(M4), loo(M5), loo(M6)))
 ```
 
 `LOO` puts $\mathcal{M}_4$ as no. 1. If we assume a $z_{\mathrm{99\%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_4$ has an advantage, i.e., $\mathrm{CI}_{z_{99\%}}$ [`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. We can also conclude this matter by saying that adding predictors to $\mathcal{M}_0$ *clearly* has a significant effect, but adding monotonic effects to our model does not (but adding category specific effects definitely does).
