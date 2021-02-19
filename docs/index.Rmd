@@ -368,14 +368,17 @@ Our caterpillar plots look good for all parameters the model estimated.
 mcmc_trace(M, regex_pars = "^b_") + legend_none()
 ```
 
-Our $\widehat{R}$ and effective sample size (neff) look good.
+Diagnostics such as divergences, tree depth and enery looks good. Additionally, our $\widehat{R}$ and effective sample size (ESS) look good.
 
-```{r}
-# should be < 1.01
-max(rhat(M), na.rm = TRUE)
+```{r diagnostics, echo=TRUE}
+# Check divergences, tree depth, energy
+rstan::check_hmc_diagnostics(eval(M)$fit)
 
-# should be > 0.1 
-min(neff_ratio(M), na.rm = TRUE)
+# Check rhat and ESS
+if(max(rhat(eval(M)), na.rm=T) >= 1.01) 
+  print("Warning: Rhat >= 1.01")
+if(min(neff_ratio(eval(M)), na.rm=T) <= 0.2) 
+  print("Warning: ESS <= 0.2")
 ```
 
 There is no perfect model, but we could claim that this is a useful model. We would even consider taking it out for a dinner.
