@@ -1,6 +1,6 @@
 ---
 title: "Feature selection analysis"
-subtitle: "Reproducibility package for the paper ..."
+subtitle: "Reproducibility package"
 author: "R. Torkar and R. Berntsson Svensson"
 date: "`r Sys.Date()`"
 output:
@@ -235,24 +235,24 @@ d$arch <- d$Architects.involvement
 First we sample a model that only has a population-level intercept (our null model, $\mathcal{M}_0$). Then we sample models using a cumulative likelihood (first w/o modeling predictors as monotonic) [@burkner19ordinal]. Once we've sampled our models we then use LOO to compare each model's relative out of sample prediction capabilities [@vehtari17loo]. Since our outcome is, in all practical sense, a Likert scale variable using an adjacent category (acat) model is really not an option.^[The acat model is a common ordinal model in item-response theory] That leaves us with two types of models: cumulative and sequential. We'll make sure to try both and also model, when appropriate, predictors as monotonic (cumulative) or category-specific (sequential) effects.
 
 ```{r null_model, cache=TRUE, warning=FALSE, message=FALSE}
-M0 <- brm(State ~ 1, family = cumulative, data = d, cores = 4, chains = 4)
+M0 <- brm(State ~ 1, family = cumulative, data = d, cores = 4, chains = 4, threads = threading(4))
 
 M1 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
-          family = cumulative, data = d, cores = 4, chains = 4)
+          family = cumulative, data = d, cores = 4, chains = 4, threads = threading(4))
 
 # Since it's cumulative likelihood we could model as monotonic.
 M2 <- brm(State ~ 1 + prio_s + crit + mo(b_val) + mo(c_val) + 
                  sh_s + kc_s + dep + mo(arch),
-          family = cumulative, data = d, cores = 4, chains = 4)
+          family = cumulative, data = d, cores = 4, chains = 4, threads = threading(4))
 
 M3 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + 
                  sh_s + kc_s + dep + arch,
-          family = sratio(), data = d, cores = 4, chains = 4)
+          family = sratio(), data = d, cores = 4, chains = 4, threads = threading(4))
 
 # or as a category-specific effects
 M4 <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + 
                  sh_s + kc_s + dep + cs(arch),
-          family = sratio(), data = d, cores = 4, chains = 4)
+          family = sratio(), data = d, cores = 4, chains = 4, threads = threading(4))
 ```
 
 Compare the models' out of sample prediction capabilities.
@@ -294,12 +294,12 @@ p <- get_prior(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) +
                family = sratio, data = d)
 
 # Beta (we have fifteen of them)
-# N(0,0.1) might seem very strict, but (15*0.1)^2 = 2.25
-p$prior[1] <- "normal(0, 0.1)"
+# N(0,0.5) might seem very strict, but (15*0.5)^2 = 56.25
+p$prior[1] <- "normal(0, 0.5)"
 
-# Our priors on alpha (five of them; one for each border between 
+# Our priors on alpha (five of them; one for each crosspoint (border) between 
 # Likert scale 1,...,6)
-p$prior[17] <- "normal(0, 2)"
+p$prior[17] <- "normal(0, 5)"
 ```
 
 Let's sample from the priors only (it's enough to use one chain here), and then check against the data to see that they are wide enough (but not too wide!)
@@ -312,7 +312,7 @@ M_prior <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) +
 ```
 
 ```{r ppc_plot, cache=TRUE, fig.margin=TRUE}
-pp_check(M_prior, type = "bars", nsamples = 100)
+pp_check(M_prior, type = "bars", nsamples = 250)
 ```
 
 If we sample from our prior predictive distribution, $y_{\mathrm{rep}}$, and plot it together with our empirical data, $y$, we'll see how the priors cover our data. As is evident (see right), by looking at the intervals, our priors seems to be relaxed and should not influence the outcome, and in our case we have $11100$ rows of data so priors should affect our outcome very little. The priors are also set up so more probability mass is set to the earlier stages since it's basically a survival model, i.e., a feature needs to survive in order to reach the next stage.
@@ -323,13 +323,13 @@ Let's now sample from our model using the priors from above.
 M <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + 
                  sh_s + kc_s + dep + cs(arch), 
          family = sratio, data = d, prior = p, chains = 4, cores = 4,
-         iter = 5e3)
+         iter = 5e3, threads = threading(4))
 ```
 
 ## Posterior predictive check
 
 ```{r ppc, echo=FALSE, warning=FALSE, message=FALSE, fig.margin=TRUE}
-pp_check(M, type = "bars", nsample = 100) +
+pp_check(M, type = "bars", nsample = 250) +
   scale_x_continuous(breaks=c(seq(1:6)), labels=as.character(levels(d$State))) +
   theme(axis.text.x = element_text(angle=15, hjust=1), legend.position = "none")
 ```
