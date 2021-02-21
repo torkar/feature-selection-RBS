@@ -141,38 +141,56 @@ d$Architects.involvement <- factor(d$Architects.involvement,
 
 ## Descriptive statistics
 
-```{r desc_stat, echo=FALSE, warning=FALSE, message=FALSE}
+First, we see that for `State` approximately as many features are released (final stage) as dropped in the first state. We also see that it drops off after the initial state. 
+
+```{r echo=FALSE}
 ggplot(d, aes(x=as.factor(State))) + 
   geom_bar() +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: State") +
   theme(axis.text.x = element_text(angle=15, hjust=1))
+```
 
+For `Team.priority` many features have zero in priority ($5139$), and then there's a bunch of them ($1516$) that have priority set to the maximum value, i.e., $1000$.
+
+```{r echo=FALSE}
 ggplot(d, aes(x=Team.priority)) +
-  geom_histogram() +
+  geom_histogram(bins = 30) +
   xlab("") + 
   ylab("") +
   ggtitle("Predictor: Team priority")
+```
 
+For `Critical.feature` we have a clear emphasis on 'No'. 
+
+```{r echo=FALSE}
 ggplot(d, aes(x=Critical.feature)) +
   geom_bar() +
   xlab("") +
   ylab("") +
   ggtitle("Predictor: Critical feature")
+```
 
+Concerning `Business.value` and `Customer.value` they are fairly similar in their respective distribution (as one would expect). 
+
+```{r echo=FALSE}
 ggplot(d, aes(x=Business.value)) + 
-  geom_histogram(stat = "count") +
+  geom_bar() +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: Business value")
 
 ggplot(d, aes(x=Customer.value)) + 
-  geom_histogram(stat = "count") +
+  geom_bar() +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: Customer value")
+```
 
+For `Stakeholder` and `Key.customers` we see a strong emphasis on lower numbers, while for `Dependency` a clear emphasis on 'No'. 
+
+```{r echo=FALSE}
 ggplot(d, aes(x=as.factor(Stakeholders))) +
   geom_bar() +
   xlab("Num. stakeholders") +
@@ -190,34 +208,18 @@ ggplot(d, aes(x=Dependency)) +
   xlab("") +
   ylab("") +
   ggtitle("Predictor: Dependency")
+```
 
+Finally, for `Architects.involvement` one can see that in the absolute majority of the cases architects are not involved.
+
+```{r echo=FALSE}
 ggplot(d, aes(x=Architects.involvement)) + 
-  geom_histogram(stat = "count") +
+  geom_bar() +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: Architects' involvement") +
   theme(axis.text.x = element_text(angle=15, hjust=1))
 ```
-
-We now have a data frame, `d`, which has all variable types correctly set.
-
-```{r}
-str(d)
-```
-
-Let's plot our outcome and predictors so we get a feeling for the distributions. In the margin you will find all variables plotted.
-
-First, we see that for `State` approximately as many features are released (final stage) as dropped in the first state. We also see that it drops off after the initial state. 
-
-For `Team.priority` many features have zero in priority ($5139$), and then there's a bunch of them ($1516$) that have priority set to the maximum value, i.e., $1000$.
-
-For `Critical.feature` we have a clear emphasis on 'No'. 
-
-Concerning `Business.value` and `Customer.value` they are fairly similar in their respective distribution (as one would expect). 
-
-For `Stakeholder` and `Key.customers` we see an emphasis on lower numbers, while for `Dependency` a clear emphasis on 'No'. 
-
-Finally, for `Architects.involvement` one can see that in the absolute majority of the cases architects are not involved.
 
 In short, it looks sort of what one would expect, i.e., it's not hard to find answers to why the plots look the way they do. 
 
@@ -228,9 +230,10 @@ However, before we continue, we should standardize some of our predictors so the
 d$prio_s <- scale(d$Team.priority)
 d$sh_s <- scale(d$Stakeholders)
 d$kc_s <- scale(d$Key.customers)
-d$Business.value <- as.integer(d$Business.value)
-d$Customer.value <- as.integer(d$Customer.value)
-d$Architects.involvement <- as.integer(d$Architects.involvement)
+
+d$b_val <- as.integer(d$Business.value) # use int as input
+d$c_val <- as.integer(d$Customer.value)
+d$arch <- as.integer(d$Architects.involvement)
 
 # Dichotomous predictors. We can set these to 1/0, but generally speaking
 # one should know what one is doing and be careful doing this!
@@ -239,10 +242,7 @@ d$Dependency <- ifelse(d$Dependency == 'Yes', 1, 0)
 
 # only abbreviate names
 d$crit <- d$Critical.feature
-d$b_val <- d$Business.value
-d$c_val <- d$Customer.value
 d$dep <- d$Dependency
-d$arch <- d$Architects.involvement
 ```
 
 # Model design {.tabset .tabset-fade .tabset-pills}
@@ -251,11 +251,11 @@ d$arch <- d$Architects.involvement
 
 Since our outcome is of an ordered categorical nature we have many options at our hands, some of which barely existed in Bayesian modeling a few decades ago. Our outcome reminds us of a survival model, i.e., a feature needs to survive in order to reach the next stage. Taking this into account we assume that the following type of models could be an option [@burkner19ordinal]:
 
-* <font style="font-family: serif">Cumulative</font> (single underlying continuous variable) [@samejima97].
-* <font style="font-family: serif">Adjacent-category</font> (mathematically convenient) [@agresti10].
-* <font style="font-family: serif">Sequential</font> model (higher response category is possible only after all lower categories are achieved) [@tutz90].
+* <font style="font-family: serif">Cumulative</font> (single underlying continuous variable) [@samejima97]. A model with no predictors ($\mathcal{M}_0$), with predictors ($\mathcal{M}_1$), and with monotonic predictors ($\mathcal{M}_2$).
+* <font style="font-family: serif">Adjacent-category</font> (mathematically convenient) [@agresti10]. A model with predictors ($\mathcal{M}_3$).
+* <font style="font-family: serif">Sequential</font> model (higher response category is possible only after all lower categories are achieved) [@tutz90]. A model with predictors ($\mathcal{M}_4$) and with category-specific predictors ($\mathcal{M}_5$).
 
-We'll make sure to compare all and also model, when appropriate, predictors as monotonic effects (for the <font style="font-family: serif">Cumulative</font> likelihood) or category-specific effects (for the <font style="font-family: serif">Sequential</font> likelihood). The reason we want to use monotonic or category-specific modeling of predictors is that predictor categories will not be assumed to be equidistant with respect to their effect on the outcome [@burkner20monotonic].
+The reason we want to use monotonic or category-specific modeling of predictors is that predictor categories will not be assumed to be equidistant with respect to their effect on the outcome [@burkner20monotonic].
 
 The <font style="font-family: serif">Cumulative</font> family is very common so let us assume a null model, $\mathcal{M}_0$, which uses this likelihood, with no predictors. Later we will compare all our models to $\mathcal{M}_0$, to ensure that adding predictors improve out of sample predictions, i.e., if we can't improve when adding predictors we might as well do other things with our time.
 
@@ -323,10 +323,17 @@ Diagnostics such as divergences, tree depth and energy looks good. Additionally,
 rstan::check_hmc_diagnostics(eval(M0)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M0)), na.rm=T) >= 1.01) 
-  print("Warning: Rhat >= 1.01")
-if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) 
-  print("Warning: ESS <= 0.2")
+if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+  print("Warning: Rhat >=1.01")
+} else {
+  print("All Rhat <1.01")
+}
+
+if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+  print("Warning: ESS <=0.2")
+} else {
+  print("All ESS >0.2")
+}
 ```
 
 ### Posterior predictive check
@@ -394,13 +401,20 @@ M1 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
 
 ```{r M1-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M1)$fit)
+rstan::check_hmc_diagnostics(eval(M0)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M1)), na.rm=T) >= 1.01) 
-  print("Warning: Rhat >= 1.01")
-if(min(neff_ratio(eval(M1)), na.rm=T) <= 0.2) 
-  print("Warning: ESS <= 0.2")
+if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+  print("Warning: Rhat >=1.01")
+} else {
+  print("All Rhat <1.01")
+}
+
+if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+  print("Warning: ESS <=0.2")
+} else {
+  print("All ESS >0.2")
+}
 ```
 
 ### Posterior predictive check
@@ -462,13 +476,20 @@ M2 <- brm(State ~ 1 + prio_s + crit + mo(b_val) + mo(c_val) + sh_s + kc_s +
 
 ```{r M2-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M2)$fit)
+rstan::check_hmc_diagnostics(eval(M0)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M2)), na.rm=T) >= 1.01) 
-  print("Warning: Rhat >= 1.01")
-if(min(neff_ratio(eval(M2)), na.rm=T) <= 0.2) 
-  print("Warning: ESS <= 0.2")
+if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+  print("Warning: Rhat >=1.01")
+} else {
+  print("All Rhat <1.01")
+}
+
+if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+  print("Warning: ESS <=0.2")
+} else {
+  print("All ESS >0.2")
+}
 ```
 
 ### Posterior predictive check
@@ -524,13 +545,20 @@ M3 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
 
 ```{r M3-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M3)$fit)
+rstan::check_hmc_diagnostics(eval(M0)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M3)), na.rm=T) >= 1.01) 
-  print("Warning: Rhat >= 1.01")
-if(min(neff_ratio(eval(M3)), na.rm=T) <= 0.2) 
-  print("Warning: ESS <= 0.2")
+if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+  print("Warning: Rhat >=1.01")
+} else {
+  print("All Rhat <1.01")
+}
+
+if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+  print("Warning: ESS <=0.2")
+} else {
+  print("All ESS >0.2")
+}
 ```
 
 ### Posterior predictive check
@@ -588,13 +616,20 @@ M4 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
 
 ```{r M4-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M4)$fit)
+rstan::check_hmc_diagnostics(eval(M0)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M4)), na.rm=T) >= 1.01) 
-  print("Warning: Rhat >= 1.01")
-if(min(neff_ratio(eval(M4)), na.rm=T) <= 0.2) 
-  print("Warning: ESS <= 0.2")
+if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+  print("Warning: Rhat >=1.01")
+} else {
+  print("All Rhat <1.01")
+}
+
+if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+  print("Warning: ESS <=0.2")
+} else {
+  print("All ESS >0.2")
+}
 ```
 
 ### Posterior predictive check
@@ -651,13 +686,20 @@ M5 <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + sh_s +
 
 ```{r M5-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M5)$fit)
+rstan::check_hmc_diagnostics(eval(M0)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M5)), na.rm=T) >= 1.01) 
-  print("Warning: Rhat >= 1.01")
-if(min(neff_ratio(eval(M5)), na.rm=T) <= 0.2) 
-  print("Warning: ESS <= 0.2")
+if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+  print("Warning: Rhat >=1.01")
+} else {
+  print("All Rhat <1.01")
+}
+
+if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+  print("Warning: ESS <=0.2")
+} else {
+  print("All ESS >0.2")
+}
 ```
 
 ### Posterior predictive check
