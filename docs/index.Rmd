@@ -18,22 +18,31 @@ header-includes:
   - \DeclareMathOperator{\logit}{logit}
 ---
 
+<!-- PLEASE READ THE CODE CHUNKS BELOW-->
 ```{r setup, include=FALSE}
 start.time <- Sys.time()
 options(htmltools.dir.version = FALSE)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 knitr::opts_chunk$set(cache=TRUE)
 
+# set this to num cores on your computer!
+CORES = 4 
+
 library(openxlsx)
 library(ggplot2)
 library(ggthemes)
-library(brms)
 library(bayesplot)
 library(tidyverse)
 library(kableExtra)
 
-options(mc.cores = parallel::detectCores()) # set num cores
-options(brms.backend="cmdstanr") # run with cmdstan(r)
+# !!! Make sure to install cmdstanr and then cmdstan !!!
+# > remotes::install_github("stan-dev/cmdstanr")
+# > library(cmdstanr)
+# > install_cmdstan(cores = 4) 
+# then,
+options(brms.backend="cmdstanr")
+options(mc.cores = CORES) # set num cores
+library(brms)
 ```
 
 # Introduction
