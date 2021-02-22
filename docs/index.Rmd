@@ -353,7 +353,7 @@ Let's look at a posterior predictive plot to see how well the model has estimate
 pp_check(M0, type = "bars", nsamples = 250)
 ```
 
-In short, very little uncertainty (i.e., the medians are quite well estimated). Let's leave $\mathcal{M}_0$ for now and add predictors to the next model.
+In short, very little uncertainty (i.e., the medians are quite well estimated). Let's leave $\mathcal{M}_0$ for now and add predictors to the next model, which you can read about by going back up and clicking on the tab $\[2.2 \mathcal{M}_1\]$.
 
 ## $\mathcal{M}_1$
 
@@ -432,7 +432,7 @@ if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
 pp_check(M1, type = "bars", nsamples = 250)
 ```
 
-Slight overestimation in the third category and slight underestimations in the first two categories. Shouldn't be a problem but worth noting.
+Slight overestimation in the third category and slight underestimations in the first two categories. Shouldn't be a problem but worth noting. The next model is $\mathcal{M}_2$.
 
 ## $\mathcal{M}_2$
 
@@ -507,6 +507,8 @@ if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
 pp_check(M2, type = "bars", nsamples = 250)
 ```
 
+Not much to say, but instead turn towards the next model $\mathcal{M}_3$.
+
 ## $\mathcal{M}_3$
 
 An <font style="font-family: serif">Adjacent-category</font> model with predictors.
@@ -575,6 +577,8 @@ if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
 ```{r}
 pp_check(M3, type = "bars", nsamples = 250)
 ```
+
+Let's move to the next model $\mathcal{M}_4$.
 
 ## $\mathcal{M}_4$
 
@@ -646,6 +650,8 @@ if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
 ```{r}
 pp_check(M4, type = "bars", nsamples = 250)
 ```
+
+Finally, let's take a look at the final (for now) model $\mathcal{M}_5$.
 
 ## $\mathcal{M}_5$
 
@@ -727,11 +733,11 @@ Once we've sampled our models we use LOO to compare the models' relative out of 
 
 `LOO` puts $\mathcal{M}_5$ as no. 1. If we assume a $z_{\mathrm{99\%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_5$ has an advantage, i.e., $\mathrm{CI}_{z_{99\%}}$[`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. 
 
-We can also clearly see that adding predictors to $\mathcal{M}_1$ *clearly* has a significant effect (compared to $\mathcal{M}_0$). However, adding monotonic effects, $\mathcal{M}_2$, has very little effect (i.e., $\mathcal{M}_1$ vs. $\mathcal{M}_2$), while adding category-specific effects, $\mathcal{M}_5$, definitely does something positive to out of sample predictions (i.e., $\mathcal{M}_5$ vs. $\mathcal{M}_4$).
+We can also clearly see that adding predictors to $\mathcal{M}_1$ *clearly* has a significant effect (compared to $\mathcal{M}_0$). However, adding monotonic effects, $\mathcal{M}_2$, had very little added benefit (i.e., $\mathcal{M}_1$ vs. $\mathcal{M}_2$), while adding category-specific effects, $\mathcal{M}_5$, definitely did something positive concerning out of sample predictions (i.e., $\mathcal{M}_5$ vs. $\mathcal{M}_4$).
 
 Also worth noting is that the <font style="font-family: serif">Cumulative</font> models are, relatively speaking, performing the worst (i.e., $\mathcal{M}_1$ and $\mathcal{M}_2$). The <font style="font-family: serif">Sequential</font> models take the two first spots, while the <font style="font-family: serif">Adjacent-category</font> model falls behind on the third spot.
 
-If we would be interested in refining our model for out of sample prediction purposes we could conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them, and decide to use $\mathcal{M}_5$ as our target model, $\mathcal{M}$, for now.
+If we would be interested in refining our models purely for optimal out of sample predictions we could conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them, and decide to use $\mathcal{M}_5$ as our target model, $\mathcal{M}$, for now.
 
 ```{r}
 M <- M5
@@ -776,9 +782,9 @@ p + scale_y_discrete(breaks=c("b_prio_s","b_crit","b_sh_s", "b_kc_s", "b_dep", "
                      labels=c("priority", "critical", "stakeholders", "key customers", "dependencies", "business value[1]", "business value[2]", "business value[3]", "business value[4]", "business value[5]", "customer value[1]", "customer value[2]", "customer value[3]", "customer value[4]", "customer value[5]", "architects[1]", "architects[2]", "architects[3]", "architects[4]", "architects[5]"))
 ```
 
-Examining the above plot, from bottom to top, we can say that on the $95$%-level, the first three parameters are clearly positive or negative and do not cross $0$. The fourth parameter, `Key customers`, is not significant, with the following $95$% credible intervals [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`]. The fifth parameter, `Dependencies`, is significant (positive) [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`]. For `Business value`, `Customer value`, and `Architects' involvement` we see that some parameters are significant, i.e., for `Business value` the parameters $[1]$ and $[4]$ and for `Customer value` parameter $[3]$. There are no significant parameters in `Architects' involvement`.
+Examining the above plot, from bottom to top, we can say that on the $95$%-level, the first three parameters are clearly positive or negative and do not cross $0$. The fourth parameter, `Key customers`, is not significant, with the following $95$% credible intervals [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`]. The fifth parameter, `Dependencies`, is significant (positive) [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`]. For `Business value`, `Customer value`, and `Architects' involvement` we see that some parameters are significant, e.g., for `Business value` the parameters $[1]$, $[3]$, and $[4]$.
 
-To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakeholders`, and `Dependencies` are significant on $\mathrm{CI}_{95\%}$, while for `Business value`, `Customer value`, and `Architecture involvement` some categories are significant. `Key customers` are not significant.
+To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakeholders`, and `Dependencies` are significant on $\mathrm{CI}_{95\%}$, while for `Business value`, `Customer value`, and `Architecture involvement` some categories are significant. `Key customers` is not significant.
 
 ## Conditional effects
 
@@ -800,15 +806,13 @@ One important question we would like to have an answer to is which independent v
 
 Concerning `Priority` we see that it has a very large effect for State $6$ (i.e., a feature being released). The higher the priority the more probability mass is set on State $6$. In the end it has close to $70$% of the probability mass, while the other states are not even close.
 
-Concerning `Criticality` we see very much the same effect, albeit the uncertainty increases also. States $3$ and $6$ have, together, more than $50$% of the probability mass. However, one thing we clearly see in the `Stakeholders` plot is that State $6$ has very little probability mass when number of stakeholders increases, i.e., the more stakeholders the lower the probability that a feature will be released.
+Concerning `Criticality` we see very much the same effect, albeit the uncertainty increases also. States $3$ and $6$ have, together, more than $60$% of the probability mass. However,in the `Stakeholders` plot, we see that State $6$ has very little probability mass (and much uncertainty) when number of stakeholders increases, i.e., the more stakeholders the lower the probability that a feature will be released.
 
-`Key customers` doesn't tell us much due to the very large uncertainty in State $6$. For `Dependencies` not much changes when it increases.
+`Key customers` doesn't tell us much due to, e.g., the very large uncertainty in State $6$. For `Dependencies` not much changes when it moves from $0$ to $1$.
 
-`Business value` and `Customer value` play a small role if we look at the plots above. 
+`Business value` and `Customer value` play a small role if we look at the plots above. Additionally, it is a bit hard to untangle the plots and it might be worthwhile conducting some further analysis.
 
-Finally, for `Architects involvement` we see that the probability for State $6$ increases when going from `none` to `Simple`, but then it remains virtually the same for the other categories.
-
-In short, `Priority` and `Criticality` have the largest effects, while the rest don't matter all too much. We don't even need a test to see that.
+Finally, for `Architects involvement` we see that the probability for State $3$ increases when going from `none` ($1$) to `Joint design` ($5$). It is hard to conclude much other things given the uncertainty at play here.
 
 # References
 
