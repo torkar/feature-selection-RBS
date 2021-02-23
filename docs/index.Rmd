@@ -160,7 +160,9 @@ ggplot(d, aes(x=as.factor(State))) +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: State") +
+  theme_tufte() +
   theme(axis.text.x = element_text(angle=15, hjust=1))
+  
 ```
 
 For `Team.priority` many features have zero in priority ($5139$), and then there's a bunch of them ($1516$) that have priority set to the maximum value, i.e., $1000$.
@@ -170,7 +172,8 @@ ggplot(d, aes(x=Team.priority)) +
   geom_histogram(bins = 30) +
   xlab("") + 
   ylab("") +
-  ggtitle("Predictor: Team priority")
+  ggtitle("Predictor: Team priority") +
+  theme_tufte()
 ```
 
 For `Critical.feature` we have a clear emphasis on 'No'. 
@@ -180,7 +183,8 @@ ggplot(d, aes(x=Critical.feature)) +
   geom_bar() +
   xlab("") +
   ylab("") +
-  ggtitle("Predictor: Critical feature")
+  ggtitle("Predictor: Critical feature") +
+  theme_tufte()
 ```
 
 Concerning `Business.value` and `Customer.value` they are fairly similar in their respective distribution (as one would expect). 
@@ -190,13 +194,14 @@ ggplot(d, aes(x=Business.value)) +
   geom_bar() +
   xlab("") + 
   ylab("Num. features") +
-  ggtitle("Predictor: Business value")
+  ggtitle("Predictor: Business value") + theme_tufte()
 
 ggplot(d, aes(x=Customer.value)) + 
   geom_bar() +
   xlab("") + 
   ylab("Num. features") +
-  ggtitle("Predictor: Customer value")
+  ggtitle("Predictor: Customer value") + 
+  theme_tufte()
 ```
 
 For `Stakeholder` and `Key.customers` we see a strong emphasis on lower numbers, while for `Dependency` a clear emphasis on 'No'. 
@@ -206,19 +211,22 @@ ggplot(d, aes(x=as.factor(Stakeholders))) +
   geom_bar() +
   xlab("Num. stakeholders") +
   ylab("Frequency") +
-  ggtitle("Predictor: Stakeholders")
+  ggtitle("Predictor: Stakeholders") +
+  theme_tufte()
 
 ggplot(d, aes(x=as.factor(Key.customers))) +
   geom_bar() +
   xlab("Num. key customers") +
   ylab("") +
-  ggtitle("Predictor: Key customers")
+  ggtitle("Predictor: Key customers") +
+  theme_tufte()
   
 ggplot(d, aes(x=Dependency)) +
   geom_bar() +
   xlab("") +
   ylab("") +
-  ggtitle("Predictor: Dependency")
+  ggtitle("Predictor: Dependency") +
+  theme_tufte()
 ```
 
 Finally, for `Architects.involvement` one can see that in the absolute majority of the cases architects are not involved.
@@ -229,6 +237,7 @@ ggplot(d, aes(x=Architects.involvement)) +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: Architects' involvement") +
+  theme_tufte() +
   theme(axis.text.x = element_text(angle=15, hjust=1))
 ```
 
