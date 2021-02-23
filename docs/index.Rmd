@@ -30,7 +30,7 @@ CORES = 4
 library(openxlsx) # read xlsx files
 library(ggplot2) # plots
 library(bayesplot) # Bayesian plots (ggplot2)
-library(ggthemes) # settign themes for plots
+library(ggthemes) # setting themes for plots
 # set global theme
 theme_set(theme_tufte())
 library(patchwork) # grouping plots in a nifty way
@@ -38,10 +38,7 @@ library(tidyverse)
 library(kableExtra) # pretty tables in Rmd
 
 # !!! Make sure to install cmdstanr and then cmdstan !!!
-# > remotes::install_github("stan-dev/cmdstanr")
-# > library(cmdstanr)
-# > install_cmdstan(cores = 4) 
-# then,
+# See appendix!
 options(brms.backend="cmdstanr")
 options(mc.cores = CORES) # set num cores
 library(brms)
@@ -51,7 +48,7 @@ library(brms)
 
 ## Synthetic data
 
-In this replication package we have used the empirical data, which is under NDA. However, one can use synthetic data to evaluate our approach and reach the same conclusions.
+In this replication package we have used empirical data under NDA. However, one can use synthetic data to evaluate our approach and reach very much the same conclusions.
 
 Here we show how to load the synthetic dataset (from the `data/` directory in the GitHub [repository](https://github.com/torkar/feature-selection-RBS)), which can then be used in the analysis.
 
@@ -63,7 +60,7 @@ The above line is currently not executed, since we will continue to run this ana
 
 ## Data cleaning
 
-First prepare the data, check for `NAs` and look at some descriptive statistics. Since we're using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, incompatible data types, etc.)
+First prepare the data, check for `NA`s and look at some descriptive statistics. Since we're using Excel we should be very careful when loading the data to see that nothing goes wrong (data manipulated in an arbitrary way, incompatible data types, etc.)
 
 ```{r}
 # Make sure to execute the previous statement, and not this one, if you want to 
@@ -71,7 +68,7 @@ First prepare the data, check for `NAs` and look at some descriptive statistics.
 d <- read.xlsx("data/Features.xlsx", sheet = "Features")
 ```
 
-This is how the empirical data looks like. In short, `r nrow(d)` rows and `r ncol(d)` variables.
+This is how the empirical data looks like. In short, `r nrow(d)` rows and `r ncol(d)` variables.^[In this text we use the words outcome and predictor for our dependent and independent variables, respectively. The word covariate can also often be used instead of predictor, even though it, in the traditional sense, means a continuous predictor.]
 
 ```{r}
 str(d)
@@ -79,37 +76,39 @@ str(d)
 
 Each row (requirement) has a unique `ID`. The `State`, which is our outcome (dependent variable), shows how far the feature survived in the requirements process. It is of an ordered categorical type, which should be modeled with some type of <font style="font-family: serif">Cumulative</font> likelihood. There are six categories:
 
-1. `Elicited, Dropped`
-2. `Elicited, Prio, Dropped`
-3. `Elicited, Prio, Planned, Dropped`
-4. `Elicited, Prio, Planned, Implemented, Dropped`
-5. `Elicited, Prio, Planned, Implemented, Tested, Dropped`
-6. `Elicited, Prio, Planned, Implemented, Tested, Released`
+1. "Elicited, Dropped"                                     
+2. "Elicited, Prio, Dropped"                               
+3. "Elicited, Prio, Planned, Dropped"                      
+4. "Elicited, Prio, Planned, Implemented, Dropped"         
+5. "Elicited, Prio, Planned, Implemented, Tested, Dropped" 
+6. "Elicited, Prio, Planned, Implemented, Tested, Released"
 
-`Team.priority` is the relative priority the feature got, $\mathbb{N} = \{0,\ldots,1000\}$. `Critical.feature` is a simple 'Yes'/'No' answer ($\mathbb{Z}_2$). `Business.value` and `Customer.value` are also ordered categorical with three levels and a fourth level called 'No value', which does not imply missingness: 
+`Team.priority` is the relative priority the feature got, $\mathbb{N} = \{0,\ldots,1000\}$. `Critical.feature` is a 'Yes'/'No' answer ($\mathbb{Z}_2$). `Business.value` and `Customer.value` are also ordered categorical with four levels. The level 'No value' is an explicit choice, so it does *not* imply missingness: 
 
-1. `No value`
-2. `Valuable`
-3. `Important`
-4. `Critical`
+1. "No value" (explict choice)
+2. "Valuable"
+3. "Important"
+4. "Critical"
 
 `Stakeholders` have integers, i.e., $\mathbb{N} = \{0,\ldots,10\}$, and `Key.customers` the same, but with a different set, i.e., $\mathbb{N} = \{0,\ldots,60\}$. 
 
 Finally, `Dependency` is $\mathbb{Z}_2$, while `Architects.involvement` is ordered categorical: 
 
-1. `None`
-2. `Simple`
-3. `Monitoring`
-4. `Active Participation`
-5. `Joint Design`
+1. "None" (explict choice)
+2. "Simple"
+3. "Monitoring"
+4. "Active Participation"
+5. "Joint Design"   
 
-All ordered categorical predictors (independent variables) can be modeled as monotonic or category-specific effects, if necessary [@burkner20monotonic].
+All ordered categorical predictors can be modeled as monotonic or category-specific effects, if necessary [@burkner20monotonic].
+
+Check for `NA`s,
 
 ```{r}
 table(is.na(d))
 ```
 
-No `NAs` in the dataset. However, that doesn't necessarily mean that we don't have `NAs`. Some of the coding can be a representation of `NA`, e.g., 'No value'. In this particular case we know that 'No value' and 'None' in the dataset actually are values and not a representation of `NA`.
+No `NA`s in the dataset. However, that doesn't necessarily mean that we don't have `NA`s. Some of the coding can be a representation of `NA`, e.g., 'No value'. In this particular case we know that 'No value' and 'None' in the dataset actually are values and not a representation of `NA`.
 
 Finally, we set correct data types.
 
@@ -152,7 +151,7 @@ d$Architects.involvement <- factor(d$Architects.involvement,
 
 ## Descriptive statistics
 
-First, we see that for `State` approximately as many features are released (final stage) as dropped in the first state. We also see that it drops off after the initial state. 
+First, we see that for the outcome `State` approximately as many features are released (final stage) as dropped in the first state. We also see that it drops off after the initial state. 
 
 ```{r echo=FALSE}
 ggplot(d, aes(x=as.factor(State))) + 
@@ -187,7 +186,7 @@ ggplot(d, aes(x=Critical.feature)) +
   theme_tufte()
 ```
 
-Concerning `Business.value` and `Customer.value` they are fairly similar in their respective distribution (as one would expect). 
+Concerning `Business.value` and `Customer.value` they are fairly similar in their respective distribution (as one would perhaps expect). 
 
 ```{r echo=FALSE}
 ggplot(d, aes(x=Business.value)) + 
@@ -279,6 +278,8 @@ The reason we want to use monotonic or category-specific modeling of predictors 
 
 The <font style="font-family: serif">Cumulative</font> family is very common so let us assume a null model, $\mathcal{M}_0$, which uses this likelihood, with no predictors. Later we will compare all our models to $\mathcal{M}_0$, to ensure that adding predictors improve out of sample predictions, i.e., if we can't improve when adding predictors we might as well do other things with our time.
 
+The outcome of the model design will be a set $M = \{\mathcal{M}_0,\ldots,\mathcal{M}_5\}$.
+
 ### Prior predictive checks
 Let us see what priors such a null model needs.
 
@@ -356,11 +357,11 @@ if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
 }
 ```
 
-When using `Stan` we have a plethora of diagnostics, which we should utilize to ensure validity and efficiency in our sampling. Below we summarize the most important ones.^[https://mc-stan.org/misc/warnings.html]
+When using `Stan` we have a plethora of diagnostics, which we should utilize to ensure validity and efficiency in our sampling. Below we summarize the ones we use.^[https://mc-stan.org/misc/warnings.html]
 
 There should be no divergences since it's an indication that the posterior is biased; it arises when the posterior landscape is hard for the sample to explore (validity concern). A reparameterization of the model might be necessary if these divergences remain.
 
-Tree depth warnings are not a validity concern but rather an efficiency concern. Reaching the maximum tree depth indicates that the sampler is terminating prematurely to avoid long execution time. Running the chains for more iterations might help.
+Tree depth warnings are not a validity concern but rather an efficiency concern. Reaching the maximum tree depth indicates that the sampler is terminating prematurely to avoid long execution time. 
 
 Having low energy values (E-BFMI) is an indication of a biased posterior (validity concern).
 
@@ -766,7 +767,7 @@ We can also see that adding predictors to $\mathcal{M}_1$ *clearly* has a signif
 
 Also worth noting is that the <font style="font-family: serif">Cumulative</font> models are, relatively speaking, performing the worst (i.e., $\mathcal{M}_1$ and $\mathcal{M}_2$). The <font style="font-family: serif">Sequential</font> models take the two first spots, while the <font style="font-family: serif">Adjacent-category</font> model falls behind on the third spot.
 
-If we would be interested in refining our models purely for optimal out of sample predictions we could conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them, and decide to use $\mathcal{M}_5$ as our target model, $\mathcal{M}$, for now.
+If we would be interested in refining our models purely for optimal out of sample predictions we could conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them and decide to use $\mathcal{M}_5$ as our target model, $\mathcal{M}$, for now.
 
 ```{r}
 M <- M5
@@ -778,28 +779,61 @@ M <- M5
 
 If we now focus on our estimates we will see that our *Intercepts*, which in this case are the borders between two categories in our outcome, are precisely estimated. However, to make sense of them we need to transform the estimates, since the values are on the $\logit$ scale.
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
-kable(round(fixef(M), digits=2), caption="Population-level estimates (fixed effects) from our model $\\mathcal{M}$. Crosspoints are in italics and significant population-level estimates are in bold. Note that the values are on $\\mathrm{logit}$ scale.") %>%
-  row_spec(c(1:5), italic = TRUE) %>%
-  row_spec(c(6:8,10:11,13:14,18:19,21:22,24:25), bold = TRUE) %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+First, let's compare the model where we did *not* use category-specific effects, with the model which did use them. On the left side we see $\mathcal{M}_4$, while on the right side we see the 'final' model we've settled on, designated $\mathcal{M}$. 
+
+```{r ef-no-cs, echo=FALSE}
+
+d1 <- round(fixef(M4), 2)[-c(1:5),]
+d2 <- round(fixef(M5), 2)[-c(1:5),]
+
+d1 %>%
+  kable("html", align = 'rc') %>%
+    kable_styling(full_width = F, position = "float_left") %>%
+    row_spec(c(1:4,5,7), bold = TRUE)
+ 
+d2 %>%
+  kable("html", align = 'rc') %>%
+  kable_styling(full_width = F, position = "right") %>%
+  row_spec(c(1:3,5:6,8,9,13:14,16:17,19:20), bold = TRUE)
 ```
 
-Let's take the first row, `Intercept[1]`, which was estimated to `r round(fixef(M)[1,1],2)`, i.e., 
+There are two things to note. First, due to us modeling category-specific effects (right table) we see that we have several estimates of interest in `arch`, which is not even significant in the other model lacking category-specific effects. Second, for all category-specific effects we receive a much more fine-grained view of precisely which categories in each predictor are making a difference. 
 
-```{r} 
-inv_logit_scaled(fixef(M)[1,1])
+To start with, let's focus on the right-hand side table consisting of estimates from $\mathcal{M}$, and turn our attention to the other parameters. The `prio_s` parameter, `r round(fixef(M)[6,1], 2)`, would then become `r round(inv_logit_scaled(fixef(M)[6,1]), 2)` when transformed with the inverse logit, i.e., 
+
+\begin{equation}
+\frac{\exp(1.22)}{\exp(1.22)+1} = 0.77
+\end{equation}
+
+But remember the suffix `_s`! We need to multiply with $\sigma_x$  and add $\bar{x}$ from the data, which leads to an estimate of `r round(inv_logit_scaled(fixef(M)[6,1]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)` $\mathrm{CI}_{95\%}$[`r round(inv_logit_scaled(fixef(M)[6,3]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`, `r round(inv_logit_scaled(fixef(M)[6,4]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`]. 
+
+As already discussed, the more exotic parameters are our category-specific effects `b_val`, `c_val`, and `arch`. To our knowledge this has never been used in an analysis in software engineering or computer science. We see that each parameter that is ordinal has five category-specific effects estimated (e.g., rows $6$--$10$ in the right-hand table above). These estimates indicate to what degree `b_val` affected the six outcomes in `State` (remember, our **outcome** consisted of **six** ordered categorical levels, having **five** borders, or crosspoints, between the levels). 
+
+If we continue taking `b_val` as an example, the $95$\% credible interval does not cross $0$ for the $1$st (positive), $3$rd (negative), and $4$th (positive) parameter (see the table above). This means that `b_val` affects the borders (cutpoints) positively between the $1$st and $2$nd categories and between the $4$th and $5$th categories, while the opposite is true for the negative effect on the intercept between the $3$rd and $4$th categories. Remember, if a border is affected positively it means that the border was shifted upwards and, hence, more probability mass was moved to lower levels! But what does this mean in practice?
+
+If you recall, our **outcome** State had six categories,
+
+```{r}
+levels(d$State)
 ```
 
-What does `r round(inv_logit_scaled(fixef(M)[1,1]), 2)` mean? Well, we have an ordered categorical outcome. So `r round(inv_logit_scaled(fixef(M)[1,1]), 2) * 100`% of the probability mass, with a 95% credible interval of [`r round(inv_logit_scaled(fixef(M)[1,3]), 2)`, `r round(inv_logit_scaled(fixef(M)[1,4]), 2)`], was assigned to the first category: `Elicited, Dropped`. For `Intercept[2]`, `r round(inv_logit_scaled(fixef(M)[2,1]), 2)` [`r round(inv_logit_scaled(fixef(M)[2,3]), 2)`, `r round(inv_logit_scaled(fixef(M)[2,4]), 2)`] was assigned to: `Elicited, Dropped` **and** `Elicited, Prio, Dropped` (i.e., the first two categories combined). Honestly, this is not that interesting; we want to know if the predictors are making a difference, and how large of a difference they make.
+So we can claim, when analyzing these estimates, that `b_val` moves probability mass to lower levels by shifting the border up between,
 
-Let's turn our attention to the other parameters. The `prio_s` parameter, `r round(fixef(M)[6,1], 2)`, would then become `r round(inv_logit_scaled(fixef(M)[6,1]), 2)` when transformed. But remember the suffix `_s`! We need to multiply with $\sigma_x$  and add $\bar{x}$ from the data, which leads to an estimate of `r round(inv_logit_scaled(fixef(M)[6,1]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)` [`r round(inv_logit_scaled(fixef(M)[6,3]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`, `r round(inv_logit_scaled(fixef(M)[6,4]) * attr(d$prio_s, "scaled:scale") + attr(d$prio_s, "scaled:center"), 2)`]. 
+```{r}
+levels(d$State)[1:2]
+```
+and,
+```{r}
+levels(d$State)[4:5]
+```
 
-The more exotic parameters are our category-specific effects `b_val`, `c_val`, and `arch`. To our knowledge this has never been used in an analysis in software engineering or computer science. We see that each parameter that is ordinal has five category-specific effects estimated (e.g., rows $11$--$15$ in the table above). These estimates indicate to what degree `b_val` affected the six outcomes in `State` (remember, our outcome consisted of six ordered categorical levels). 
+while it shifts the border *down* between,
 
-If we continue taking `b_val` as an example, the $95$\% credible interval does not cross $0$ for the $1$st, $3$rd, and $4$th parameter (see the table above), and is clearly positive in the first two cases and negative in the last case. This means that `b_val` affects the intercepts (cutpoints) positively between the $1$st and $2$nd categories and between the $3$rd and $4$th categories, while the opposite is true for the negative effect on the intercept between the $4$th and $5$th categories. These effects would have been impossible to estimate without modeling it separately as we did in $\mathcal{M}$.
+```{r}
+levels(d$State)[3:4]
+```
 
-However, looking at point estimates is, quite frankly, not terribly useful. Let's plot the posterior probability densities for our population-level estimates on the $\logit$ scale, disregarding `Intercept`$[1,\ldots,5]$ (we are, after all, interested in the effect our predictors have on the outcome, not the outcome itself).
+Next, let's plot the posterior probability densities for our population-level estimates on the $\logit$ scale.
 
 ```{r mcmc_areas, echo=FALSE, warnings=FALSE, message=FALSE}
 p <- mcmc_areas(M, regex_pars = c("b_val", "c_val", "arch"),
@@ -812,13 +846,13 @@ p + scale_y_discrete(breaks=c("b_prio_s","b_crit","b_sh_s", "b_kc_s", "b_dep", "
                      labels=c("priority", "critical", "stakeholders", "key customers", "dependencies", "business value[1]", "business value[2]", "business value[3]", "business value[4]", "business value[5]", "customer value[1]", "customer value[2]", "customer value[3]", "customer value[4]", "customer value[5]", "architects[1]", "architects[2]", "architects[3]", "architects[4]", "architects[5]"))
 ```
 
-Examining the above plot, from bottom to top, we can say that on the $95$%-level, the first three parameters are clearly positive or negative and do not cross $0$. The fourth parameter, `Key customers`, is not significant, with the following $95$% credible intervals [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`]. The fifth parameter, `Dependencies`, is significant (positive) [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`]. For `Business value`, `Customer value`, and `Architects' involvement` we see that some parameters are significant, e.g., for `Business value` the parameters $[1]$, $[3]$, and $[4]$.
+Examining the above plot, from bottom to top, we can say that on the $95$%-level, the first three parameters are clearly positive or negative and do not cross $0$. The fourth parameter, `Key customers`, is not significant, with the following $95$% credible intervals [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`]. The fifth parameter, `Dependencies`, is significant (positive) [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`]. For `Business value`, `Customer value`, and `Architects' involvement` we see that some parameters are significant.
 
-To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakeholders`, and `Dependencies` are significant on $\mathrm{CI}_{95\%}$, while for `Business value`, `Customer value`, and `Architecture involvement` some categories are significant. `Key customers` is not significant.
+To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakeholders`, and `Dependencies` are significant on $\mathrm{CI}_{95\%}$, while for `Business value`, `Customer value`, and `Architects' involvement` some categories are significant. `Key customers` is not significant.
 
 ## Conditional effects
 
-Below we plot all the conditional effects for covariates with continuous values (incl. 0/1). The colors represent the different ordered categories, $1,\ldots,6$, for our outcome `State`. We are particularly interested in Category $6$, i.e., the final category which indicates a released feature.
+Below we plot conditional effects for some of our estimates. The colors represent the different ordered categories, $1,\ldots,6$, for our outcome `State`. We are particularly interested in Category $6$, i.e., the final category which indicates a released feature.
 
 1. `Elicited, Dropped`
 2. `Elicited, Prio, Dropped`
@@ -831,7 +865,7 @@ Below we plot all the conditional effects for covariates with continuous values 
 ce <- conditional_effects(M, categorical = TRUE)
 ```
 
-One important question we would like to have an answer to is which independent variable(s) contribute(s) more for a feature to, ultimately, be *released*, i.e., is it priority, criticality, business or customer value, number of stakeholders, number of key customers, having dependencies, and/or the level of architect involvement? In the above plots the answer to our question can be found, without even having to conduct any statistical tests or examining $p$-values. Let's start by analyzing the covariate `Priority`.
+One important question we would like to have an answer to is which independent variable(s) contribute(s) more for a feature to, ultimately, be *released*, i.e., is it priority, criticality, business or customer value, number of stakeholders, number of key customers, having dependencies, and/or the level of architect involvement? In the above plots the answer to our question can be found, without even having to conduct any statistical tests or examining $p$-values. Let's start by analyzing the predictor `Priority`.
 
 ```{r, echo = FALSE}
 plot(ce, plot = FALSE)[[1]] + 
@@ -849,9 +883,9 @@ plot(ce, plot = FALSE)[[2]] +
   theme_tufte()
 ```
 
-For the covariate `Critical` we see some of the same effects, albeit the uncertainty increases. The clearest effect is visible for State $6$, i.e., going from No to Yes significantly increases the probability, while the opposite holds for States $1$--$3$ (logically so, since if it is critical then a requirement should be released with a higher probability, i.e., Stage $6$).
+For the predictor `Critical` we see some of the same effects, albeit the uncertainty increases. The clearest effect is visible for State $6$, i.e., going from No to Yes significantly increases the probability, while the opposite holds for States $1$--$3$ (logically so, since if it is critical then a requirement should be released with a higher probability, i.e., Stage $6$).
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning=FALSE}
 plot(ce, plot = FALSE)[[3]] + 
   scale_fill_colorblind() + 
   xlab("Number of stakeholders") +
@@ -886,6 +920,29 @@ plot(ce, plot = FALSE)[[4]] +
 <div id="refs"></div>
 
 # Appendix
+
+## CmdStan
+
+For the sampling we refrain from using [rstan](https://mc-stan.org/users/interfaces/rstan) and instead use [cmdstan](https://mc-stan.org/users/interfaces/cmdstan) through the <font style="font-family: serif">R</font> package [cmdstanr](https://mc-stan.org/cmdstanr/). Generally speaking, the community now prefer users to use `cmdstan` since it updates more frequently.
+
+Install `cmdstanr` and `cmdstan` by,
+
+```{r, eval=FALSE}
+CORES = 4 # set to the number of available CPU cores
+remotes::install_github("stan-dev/cmdstanr")
+cmdstanr::install_cmdstan(cores = CORES)
+
+# once you have brms installed you can now run brms with cmdstan instead of rstan
+options(brms.backend="cmdstanr")
+options(mc.cores = CORES) # set num cores
+library(brms)
+```
+
+For this execution we've used,
+
+```{r}
+cmdstanr::cmdstan_version()
+```
 
 ## Environment
 
