@@ -18,9 +18,8 @@ header-includes:
   - \DeclareMathOperator{\logit}{logit}
 ---
 
-<!-- PLEASE READ THE CODE CHUNKS BELOW-->
+<!-- PLEASE READ COMMENTS BELOW-->
 ```{r setup, include=FALSE}
-start.time <- Sys.time()
 options(htmltools.dir.version = FALSE)
 knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
 knitr::opts_chunk$set(cache=TRUE)
@@ -28,12 +27,15 @@ knitr::opts_chunk$set(cache=TRUE)
 # set this to num cores on your computer!
 CORES = 4 
 
-library(openxlsx)
-library(ggplot2)
-library(ggthemes)
-library(bayesplot)
+library(openxlsx) # read xlsx files
+library(ggplot2) # plots
+library(bayesplot) # Bayesian plots (ggplot2)
+library(ggthemes) # settign themes for plots
+# set global theme
+theme_set(theme_tufte())
+library(patchwork) # grouping plots in a nifty way
 library(tidyverse)
-library(kableExtra)
+library(kableExtra) # pretty tables in Rmd
 
 # !!! Make sure to install cmdstanr and then cmdstan !!!
 # > remotes::install_github("stan-dev/cmdstanr")
@@ -75,7 +77,7 @@ This is how the empirical data looks like. In short, `r nrow(d)` rows and `r nco
 str(d)
 ```
 
-Each row (requirement) has a unique `ID`. The `State`, which is our outcome (dependent variable), shows how far the feature survived in the requirements process. It is of an ordered categorical type, which should be modeled with some type of <font style="font-family: serif">Cumulative</font> likelihood. There are seven categories:
+Each row (requirement) has a unique `ID`. The `State`, which is our outcome (dependent variable), shows how far the feature survived in the requirements process. It is of an ordered categorical type, which should be modeled with some type of <font style="font-family: serif">Cumulative</font> likelihood. There are six categories:
 
 1. `Elicited, Dropped`
 2. `Elicited, Prio, Dropped`
@@ -319,13 +321,13 @@ M0 <- brm(State ~ 1,
 
 ### Diagnostics
 
-Our caterpillar plots look good for all parameters the model estimated (i.e., they look like fat caterpillars when they four chains have mixed well).
+Our caterpillar plots look good for all estimated parameters (i.e., they look like fat caterpillars when the chains have mixed well).
 
 ```{r M0-caterpillar, echo=FALSE}
 mcmc_trace(M0, regex_pars = "^b_") + legend_none()
 ```
 
-Diagnostics such as divergences, tree depth and energy looks good. Additionally, our $\widehat{R}$ and effective sample size (ESS) look good.
+Diagnostics such as divergences, tree depth, energy, $\widehat{R}$, and $\mathrm{ESS}$ all look good. 
 
 ```{r M0-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
@@ -345,6 +347,24 @@ if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
 }
 ```
 
+When using `Stan` we have a plethora of diagnostics, which we should utilize to ensure validity and efficiency in our sampling. Below we summarize the most important ones.^[https://mc-stan.org/misc/warnings.html]
+
+There should be no divergences since it's an indication that the posterior is biased; it arises when the posterior landscape is hard for the sample to explore (validity concern). A reparameterization of the model might be necessary if these divergences remain.
+
+Tree depth warnings are not a validity concern but rather an efficiency concern. Reaching the maximum tree depth indicates that the sampler is terminating prematurely to avoid long execution time. Running the chains for more iterations might help.
+
+Having low energy values (E-BFMI) is an indication of a biased posterior (validity concern).
+
+The $\widehat{R}$ convergence diagnostics indicates if the independent chains converged, i.e. explored the posterior in approximately the same way (validity concern).
+
+The effective sample size ($\mathrm{ESS}$) captures how many independent draws contain the same amount of information as the dependent sample obtained by the MCMC algorithm. The higher the better. When we come closer to $0.1$ we should start worrying and in absolute numbers we should be in the hundreds for the Central Limit Theorem to hold.
+
+Additionally, the Monte Carlo Standard Error (MCSE) has been checked for all models. The MCSE is yet another criteria that reflects effective accuracy of a Markov chain by dividing the standard deviation of the chain with the square root of its effective sample size,
+
+\begin{equation}
+\mathrm{MCSE} = \frac{\mathrm{SD}}{\sqrt{\mathrm{ESS}}}
+\end{equation}
+
 ### Posterior predictive check
 
 Let's look at a posterior predictive plot to see how well the model has estimated our $6$ levels we have in our outcome.
@@ -353,7 +373,7 @@ Let's look at a posterior predictive plot to see how well the model has estimate
 pp_check(M0, type = "bars", nsamples = 250)
 ```
 
-In short, very little uncertainty (i.e., the medians are quite well estimated). Let's leave $\mathcal{M}_0$ for now and add predictors to the next model, which you can read about by going back up and clicking on the tab $\[2.2 \mathcal{M}_1\]$.
+In short, very little uncertainty (i.e., the medians are quite well estimated). Let's leave $\mathcal{M}_0$ for now and add predictors to the next model, which you can read about by going back up and clicking on the tab $[2.2\ \mathcal{M}_1]$.
 
 ## $\mathcal{M}_1$
 
@@ -733,7 +753,7 @@ Once we've sampled our models we use LOO to compare the models' relative out of 
 
 `LOO` puts $\mathcal{M}_5$ as no. 1. If we assume a $z_{\mathrm{99\%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_5$ has an advantage, i.e., $\mathrm{CI}_{z_{99\%}}$[`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. 
 
-We can also clearly see that adding predictors to $\mathcal{M}_1$ *clearly* has a significant effect (compared to $\mathcal{M}_0$). However, adding monotonic effects, $\mathcal{M}_2$, had very little added benefit (i.e., $\mathcal{M}_1$ vs. $\mathcal{M}_2$), while adding category-specific effects, $\mathcal{M}_5$, definitely did something positive concerning out of sample predictions (i.e., $\mathcal{M}_5$ vs. $\mathcal{M}_4$).
+We can also see that adding predictors to $\mathcal{M}_1$ *clearly* has a significant effect (compared to $\mathcal{M}_0$). However, adding monotonic effects, $\mathcal{M}_2$, had very little added benefit (i.e., $\mathcal{M}_1$ vs. $\mathcal{M}_2$), while adding category-specific effects, $\mathcal{M}_5$, definitely did something positive concerning out of sample predictions (i.e., $\mathcal{M}_5$ vs. $\mathcal{M}_4$).
 
 Also worth noting is that the <font style="font-family: serif">Cumulative</font> models are, relatively speaking, performing the worst (i.e., $\mathcal{M}_1$ and $\mathcal{M}_2$). The <font style="font-family: serif">Sequential</font> models take the two first spots, while the <font style="font-family: serif">Adjacent-category</font> model falls behind on the third spot.
 
@@ -778,8 +798,12 @@ p <- mcmc_areas_ridges(M, regex_pars = c("b_val", "c_val", "arch"),
                   prob_outer = 0.95,
                   prob = 0.5) +
   vline_0(size=0.3) 
+
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 p + scale_y_discrete(breaks=c("b_prio_s","b_crit","b_sh_s", "b_kc_s", "b_dep", "bcs_b_val[1]", "bcs_b_val[2]", "bcs_b_val[3]", "bcs_b_val[4]", "bcs_b_val[5]", "bcs_c_val[1]", "bcs_c_val[2]", "bcs_c_val[3]", "bcs_c_val[4]", "bcs_c_val[5]", "bcs_arch[1]", "bcs_arch[2]", "bcs_arch[3]", "bcs_arch[4]", "bcs_arch[5]"),
-                     labels=c("priority", "critical", "stakeholders", "key customers", "dependencies", "business value[1]", "business value[2]", "business value[3]", "business value[4]", "business value[5]", "customer value[1]", "customer value[2]", "customer value[3]", "customer value[4]", "customer value[5]", "architects[1]", "architects[2]", "architects[3]", "architects[4]", "architects[5]"))
+                     labels=c("priority", "critical", "stakeholders", "key customers", "dependencies", "business value[1]", "business value[2]", "business value[3]", "business value[4]", "business value[5]", "customer value[1]", "customer value[2]", "customer value[3]", "customer value[4]", "customer value[5]", "architects[1]", "architects[2]", "architects[3]", "architects[4]", "architects[5]")) + 
+  theme_tufte() + theme(legend.position = "none") 
 ```
 
 Examining the above plot, from bottom to top, we can say that on the $95$%-level, the first three parameters are clearly positive or negative and do not cross $0$. The fourth parameter, `Key customers`, is not significant, with the following $95$% credible intervals [`r round(fixef(M)[9,3], 2)`, `r round(fixef(M)[9,4], 2)`]. The fifth parameter, `Dependencies`, is significant (positive) [`r round(fixef(M)[10,3], 2)`, `r round(fixef(M)[10,4], 2)`]. For `Business value`, `Customer value`, and `Architects' involvement` we see that some parameters are significant, e.g., for `Business value` the parameters $[1]$, $[3]$, and $[4]$.
@@ -788,7 +812,7 @@ To conclude what we've noticed so far: `Priority`, `Critical feature`, `Stakehol
 
 ## Conditional effects
 
-Below we plot all conditional effects for our model. The colors represent the different ordered categories, $1,\ldots,6$, for our outcome `State`. We are particularly interested in Category $6$ (pink), i.e., the final category which indicates a released feature.
+Below we plot all the conditional effects for covariates with continuous values (incl. 0/1). The colors represent the different ordered categories, $1,\ldots,6$, for our outcome `State`. We are particularly interested in Category $6$, i.e., the final category which indicates a released feature.
 
 1. `Elicited, Dropped`
 2. `Elicited, Prio, Dropped`
@@ -798,34 +822,64 @@ Below we plot all conditional effects for our model. The colors represent the di
 6. `Elicited, Prio, Planned, Implemented, Tested, Released`
 
 ```{r cond_effects, echo=FALSE}
-conditional_effects(M, categorical = TRUE)
+ce <- conditional_effects(M, categorical = TRUE)
 ```
 
-# Conclusions
-One important question we would like to have an answer to is which independent variable(s) contribute(s) more for a feature to, ultimately, be *released*, i.e., is it priority, criticality, business or customer value, number of stakeholders, number of key customers, having dependencies, and/or the level of architect involvement? In the above plots the answer to our question can be found, without even having to conduct any statistical tests or examining $p$-values.
+One important question we would like to have an answer to is which independent variable(s) contribute(s) more for a feature to, ultimately, be *released*, i.e., is it priority, criticality, business or customer value, number of stakeholders, number of key customers, having dependencies, and/or the level of architect involvement? In the above plots the answer to our question can be found, without even having to conduct any statistical tests or examining $p$-values. Let's start by analyzing the covariate `Priority`.
 
-Concerning `Priority` we see that it has a very large effect for State $6$ (i.e., a feature being released). The higher the priority the more probability mass is set on State $6$. In the end it has close to $70$% of the probability mass, while the other states are not even close.
+```{r, echo = FALSE}
+plot(ce, plot = FALSE)[[1]] + 
+  scale_fill_colorblind() + 
+  xlab("Priority (scaled)") + 
+  theme_tufte()
+```
 
-Concerning `Criticality` we see very much the same effect, albeit the uncertainty increases also. States $3$ and $6$ have, together, more than $60$% of the probability mass. However,in the `Stakeholders` plot, we see that State $6$ has very little probability mass (and much uncertainty) when number of stakeholders increases, i.e., the more stakeholders the lower the probability that a feature will be released.
+Concerning `Priority` we see that it has a very large effect for State $6$ (i.e., a feature being released). The higher the priority (the more to the right) the more probability mass is set on State $6$. In the end it has close to $70$% of the probability mass, while the other states are not even close. Also worth noting is how, for State $4$ (the hump), medium priorities seem to be the recipe for reaching this stage. 
 
-`Key customers` doesn't tell us much due to, e.g., the very large uncertainty in State $6$. For `Dependencies` not much changes when it moves from $0$ to $1$.
+```{r, echo = FALSE}
+plot(ce, plot = FALSE)[[2]] + 
+  scale_fill_colorblind() + 
+  scale_x_continuous(name = "Critical", breaks=c(0,1), labels = c("No", "Yes")) +
+  theme_tufte()
+```
 
-`Business value` and `Customer value` play a small role if we look at the plots above. Additionally, it is a bit hard to untangle the plots and it might be worthwhile conducting some further analysis.
+For the covariate `Critical` we see some of the same effects, albeit the uncertainty increases. The clearest effect is visible for State $6$, i.e., going from No to Yes significantly increases the probability, while the opposite holds for States $1$--$3$ (logically so, since if it is critical then a requirement should be released with a higher probability, i.e., Stage $6$).
 
-Finally, for `Architects involvement` we see that the probability for State $3$ increases when going from `none` ($1$) to `Joint design` ($5$). It is hard to conclude much other things given the uncertainty at play here.
+```{r, echo = FALSE}
+plot(ce, plot = FALSE)[[3]] + 
+  scale_fill_colorblind() + 
+  xlab("Number of stakeholders") +
+  theme_tufte() +
+  xlim(0, 15)
+```
+
+Concerning `Number of stakeholders`, we see that virtually all states (except State $1$) has a lower probability with increasing number of stakeholders (and more uncertainty is visible). For State $1$, however, an increase in stakeholders leads to an increase in probability. One could claim this is natural since having stakeholders would lead to the requirement being considered in the first place.
+
+```{r, echo = FALSE}
+plot(ce, plot = FALSE)[[5]] + 
+  scale_fill_colorblind() + 
+  scale_x_continuous(name = "Dependency", breaks=c(0,1), labels = c("No", "Yes")) +
+  theme_tufte()
+```
+
+
+For `Dependency` not much changes when it moves from No to Yes.
+
+We saw previously that `Key customers` was not a significant parameter. If we plot it we will see why, i.e., the uncertainty is too large.
+
+```{r kc, echo=FALSE}
+plot(ce, plot = FALSE)[[4]] +
+  scale_fill_colorblind() + 
+  xlab("Number of key customers") + 
+  theme_tufte()
+```
+
 
 # References
 
 <div id="refs"></div>
 
 # Appendix
-
-## Computation time
-
-```{r}
-end.time <- Sys.time()
-round((end.time - start.time), 1)
-```
 
 ## Environment
 
