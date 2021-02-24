@@ -160,7 +160,8 @@ ggplot(d, aes(x=as.factor(State))) +
   ylab("Num. features") +
   ggtitle("Predictor: State") +
   theme_tufte() +
-  theme(axis.text.x = element_text(angle=15, hjust=1))
+  theme(axis.text.x = element_text(angle=15, hjust=1),
+        text = element_text(size = 22))
   
 ```
 
@@ -169,10 +170,10 @@ For `Team.priority` many features have zero in priority ($5139$), and then there
 ```{r echo=FALSE}
 ggplot(d, aes(x=Team.priority)) +
   geom_histogram(bins = 30) +
-  xlab("") + 
+  xlab("Priority") + 
   ylab("") +
   ggtitle("Predictor: Team priority") +
-  theme_tufte()
+  theme_tufte() + theme(text = element_text(size = 22))
 ```
 
 For `Critical.feature` we have a clear emphasis on 'No'. 
@@ -183,7 +184,7 @@ ggplot(d, aes(x=Critical.feature)) +
   xlab("") +
   ylab("") +
   ggtitle("Predictor: Critical feature") +
-  theme_tufte()
+  theme_tufte() + theme(text = element_text(size = 22))
 ```
 
 Concerning `Business.value` and `Customer.value` they are fairly similar in their respective distribution (as one would perhaps expect). 
@@ -193,14 +194,15 @@ ggplot(d, aes(x=Business.value)) +
   geom_bar() +
   xlab("") + 
   ylab("Num. features") +
-  ggtitle("Predictor: Business value") + theme_tufte()
+  ggtitle("Predictor: Business value") + 
+  theme_tufte() + theme(text = element_text(size = 22))
 
 ggplot(d, aes(x=Customer.value)) + 
   geom_bar() +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: Customer value") + 
-  theme_tufte()
+  theme_tufte() + theme(text = element_text(size = 22))
 ```
 
 For `Stakeholder` and `Key.customers` we see a strong emphasis on lower numbers, while for `Dependency` a clear emphasis on 'No'. 
@@ -211,21 +213,21 @@ ggplot(d, aes(x=as.factor(Stakeholders))) +
   xlab("Num. stakeholders") +
   ylab("Frequency") +
   ggtitle("Predictor: Stakeholders") +
-  theme_tufte()
+  theme_tufte() + theme(text = element_text(size = 22))
 
 ggplot(d, aes(x=as.factor(Key.customers))) +
   geom_bar() +
   xlab("Num. key customers") +
   ylab("") +
   ggtitle("Predictor: Key customers") +
-  theme_tufte()
+  theme_tufte() + theme(text = element_text(size = 22))
   
 ggplot(d, aes(x=Dependency)) +
   geom_bar() +
   xlab("") +
   ylab("") +
   ggtitle("Predictor: Dependency") +
-  theme_tufte()
+  theme_tufte() + theme(text = element_text(size = 22))
 ```
 
 Finally, for `Architects.involvement` one can see that in the absolute majority of the cases architects are not involved.
@@ -237,7 +239,8 @@ ggplot(d, aes(x=Architects.involvement)) +
   ylab("Num. features") +
   ggtitle("Predictor: Architects' involvement") +
   theme_tufte() +
-  theme(axis.text.x = element_text(angle=15, hjust=1))
+  theme(axis.text.x = element_text(angle=15, hjust=1),
+        text = element_text(size = 22))
 ```
 
 In short, it looks sort of what one would expect, i.e., it's not hard to find answers to why the plots look the way they do. 
