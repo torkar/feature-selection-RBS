@@ -268,7 +268,7 @@ div.tocify {
 <h1 class="title toc-ignore">Feature selection analysis of 11110 requirements</h1>
 <h3 class="subtitle">Replication package</h3>
 <h4 class="author">R. Torkar and R. Berntsson Svensson</h4>
-<h4 class="date">First revision 2020-01-17. This revision 2021-02-23.</h4>
+<h4 class="date">First revision 2020-01-17. This revision 2021-02-24.</h4>
 
 </div>
 
@@ -515,13 +515,13 @@ if(max(rhat(eval(M0)), na.rm=T) &gt;= 1.01) {
   print(&quot;All ESS &gt;0.2&quot;)
 }</code></pre>
 <pre><code>## [1] &quot;All ESS &gt;0.2&quot;</code></pre>
-<p>When using <code>Stan</code> we have a plethora of diagnostics, which we should utilize to ensure validity and efficiency in our sampling. Below we summarize the ones we use.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
-<p>There should be no divergences since it’s an indication that the posterior is biased; it arises when the posterior landscape is hard for the sample to explore (validity concern). A reparameterization of the model might be necessary if these divergences remain.</p>
-<p>Tree depth warnings are not a validity concern but rather an efficiency concern. Reaching the maximum tree depth indicates that the sampler is terminating prematurely to avoid long execution time.</p>
-<p>Having low energy values (E-BFMI) is an indication of a biased posterior (validity concern).</p>
-<p>The <span class="math inline">\(\widehat{R}\)</span> convergence diagnostics indicates if the independent chains converged, i.e. explored the posterior in approximately the same way (validity concern).</p>
-<p>The effective sample size (<span class="math inline">\(\mathrm{ESS}\)</span>) captures how many independent draws contain the same amount of information as the dependent sample obtained by the MCMC algorithm. The higher the better. When we come closer to <span class="math inline">\(0.1\)</span> we should start worrying and in absolute numbers we should be in the hundreds for the Central Limit Theorem to hold.</p>
-<p>Additionally, the Monte Carlo Standard Error (MCSE) has been checked for all models. The MCSE is yet another criteria that reflects effective accuracy of a Markov chain by dividing the standard deviation of the chain with the square root of its effective sample size,</p>
+<p>When using dynamic Hamiltonian Monte Carlo we have a plethora of diagnostics, which we should utilize to ensure validity and efficiency when sampling. Here follows a summary of the most common diagnostics.<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a></p>
+<p>There should be no divergences since it’s an indication that the posterior is biased; it arises when the posterior landscape is hard for the sample to explore (validity concern).<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> A reparameterization of the model might be necessary if these divergences remain.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a></p>
+<p>Tree depth warnings are not a validity concern but rather an efficiency concern. Reaching the maximum tree depth indicates that the sampler is terminating prematurely to avoid long execution time <span class="citation">(<a href="#ref-homanG14hmc" role="doc-biblioref">Homan and Gelman, 2014</a>)</span>.</p>
+<p>Having low energy values (E-BFMI) is an indication of a biased posterior (validity concern) <span class="citation">(<a href="#ref-betancourt2016diagnosing" role="doc-biblioref">Betancourt, 2016</a>)</span>.</p>
+<p>The <span class="math inline">\(\widehat{R}\)</span> convergence diagnostics indicates if the independent chains converged, i.e. explored the posterior in approximately the same way (validity concern) <span class="citation">(<a href="#ref-vehtariGSCB21rhat" role="doc-biblioref">Vehtari et al., 2021</a>)</span>.</p>
+<p>The effective sample size (<span class="math inline">\(\mathrm{ESS}\)</span>) captures how many independent draws contain the same amount of information as the dependent sample obtained by the MCMC algorithm. The higher the better. When we come closer to <span class="math inline">\(0.1\)</span> we should start worrying and in absolute numbers we should be in the hundreds for the Central Limit Theorem to hold <span class="citation">(<a href="#ref-betancourt2018conceptual" role="doc-biblioref">Betancourt, 2018</a>)</span>.</p>
+<p>Additionally, the Monte Carlo Standard Error (MCSE) has been checked for all models. The MCSE is yet another criteria that reflects effective accuracy of a Markov chain by dividing the standard deviation of the chain with the square root of its effective sample size <span class="citation">(<a href="#ref-betancourt2018conceptual" role="doc-biblioref">Betancourt, 2018</a>)</span>,</p>
 <p><span class="math display">\[\begin{equation}
 \mathrm{MCSE} = \frac{\mathrm{SD}}{\sqrt{\mathrm{ESS}}}
 \end{equation}\]</span></p>
@@ -1000,7 +1000,7 @@ if(max(rhat(eval(M0)), na.rm=T) &gt;= 1.01) {
 </div>
 <div id="model-comparison" class="section level1" number="3">
 <h1><span class="header-section-number">3</span> Model comparison</h1>
-<p>Once we’ve sampled our models we use LOO to compare the models’ relative out of sample prediction capabilities <span class="citation">(<a href="#ref-vehtari17loo" role="doc-biblioref">Vehtari et al., 2017</a>)</span>.</p>
+<p>Once we’ve sampled our set of models <span class="math inline">\(M\)</span> we use LOO to compare the models’ relative out of sample prediction capabilities <span class="citation">(<a href="#ref-vehtari17loo" role="doc-biblioref">Vehtari et al., 2017</a>)</span>.</p>
 <pre class="r"><code>(l &lt;- loo_compare(loo(M0), loo(M1), loo(M2), loo(M3), loo(M4), loo(M5)))</code></pre>
 <pre><code>##    elpd_diff se_diff
 ## M5     0.0       0.0
@@ -1010,17 +1010,17 @@ if(max(rhat(eval(M0)), na.rm=T) &gt;= 1.01) {
 ## M1  -148.6      20.2
 ## M0 -3318.0      63.2</code></pre>
 <p><code>LOO</code> puts <span class="math inline">\(\mathcal{M}_5\)</span> as no. 1. If we assume a <span class="math inline">\(z_{\mathrm{99\%}}\)</span>-score of <span class="math inline">\(2.58\)</span> it’s clear that zero is not in the interval and that <span class="math inline">\(\mathcal{M}_5\)</span> has an advantage, i.e., <span class="math inline">\(\mathrm{CI}_{z_{99\%}}\)</span>[-71.43, -15.84].</p>
-<p>We can also see that adding predictors to <span class="math inline">\(\mathcal{M}_1\)</span> <em>clearly</em> has a significant effect (compared to <span class="math inline">\(\mathcal{M}_0\)</span>). However, adding monotonic effects, <span class="math inline">\(\mathcal{M}_2\)</span>, had very little added benefit (i.e., <span class="math inline">\(\mathcal{M}_1\)</span> vs. <span class="math inline">\(\mathcal{M}_2\)</span>), while adding category-specific effects, <span class="math inline">\(\mathcal{M}_5\)</span>, definitely did something positive concerning out of sample predictions (i.e., <span class="math inline">\(\mathcal{M}_5\)</span> vs. <span class="math inline">\(\mathcal{M}_4\)</span>).</p>
+<p>By looking at the expected log pointwise predictive density (elpd), one can see that adding predictors to <span class="math inline">\(\mathcal{M}_1\)</span> <em>clearly</em> has a significant effect (compared to <span class="math inline">\(\mathcal{M}_0\)</span>). However, adding monotonic effects, <span class="math inline">\(\mathcal{M}_2\)</span>, had very little added benefit (i.e., <span class="math inline">\(\mathcal{M}_1\)</span> vs. <span class="math inline">\(\mathcal{M}_2\)</span>), while adding category-specific effects, <span class="math inline">\(\mathcal{M}_5\)</span>, definitely did something positive concerning out of sample predictions (i.e., <span class="math inline">\(\mathcal{M}_5\)</span> vs. <span class="math inline">\(\mathcal{M}_4\)</span>).</p>
 <p>Also worth noting is that the <font style="font-family: serif">Cumulative</font> models are, relatively speaking, performing the worst (i.e., <span class="math inline">\(\mathcal{M}_1\)</span> and <span class="math inline">\(\mathcal{M}_2\)</span>). The <font style="font-family: serif">Sequential</font> models take the two first spots, while the <font style="font-family: serif">Adjacent-category</font> model falls behind on the third spot.</p>
-<p>If we would be interested in refining our models purely for optimal out of sample predictions we could conduct variable selection. However, in this particular case we are interested in each predictor’s effect, so we’ll keep them and decide to use <span class="math inline">\(\mathcal{M}_5\)</span> as our target model, <span class="math inline">\(\mathcal{M}\)</span>, for now.</p>
+<p>If we would be interested in refining our models purely for optimal out of sample predictions we could conduct variable selection <span class="citation">(<a href="#ref-piironenPV20projpred" role="doc-biblioref">Piironen et al., 2020</a>)</span>. However, in this particular case we are interested in each predictor’s effect, so we’ll keep them and decide to use <span class="math inline">\(\mathcal{M}_5\)</span> as our target model, <span class="math inline">\(\mathcal{M}\)</span>, for now.</p>
 <pre class="r"><code>M &lt;- M5</code></pre>
 </div>
 <div id="estimates-and-effects" class="section level1" number="4">
 <h1><span class="header-section-number">4</span> Estimates and effects</h1>
 <div id="parameter-estimates" class="section level2" number="4.1">
 <h2><span class="header-section-number">4.1</span> Parameter estimates</h2>
-<p>If we now focus on our estimates we will see that our <em>Intercepts</em>, which in this case are the borders between two categories in our outcome, are precisely estimated. However, to make sense of them we need to transform the estimates, since the values are on the <span class="math inline">\(\mathop{\mathrm{logit}}\)</span> scale.</p>
-<p>First, let’s compare the model where we did <em>not</em> use category-specific effects, with the model which did use them. On the left side we see <span class="math inline">\(\mathcal{M}_4\)</span>, while on the right side we see the ‘final’ model we’ve settled on, designated <span class="math inline">\(\mathcal{M}\)</span>.</p>
+<p>To make sense of the parameter estimates we need to transform them, since the values are on the <span class="math inline">\(\mathop{\mathrm{logit}}\)</span> scale.</p>
+<p>First, let’s compare the model where we did <em>not</em> use category-specific effects (<span class="math inline">\(\mathcal{M}_4\)</span>), with the model which did use them (<span class="math inline">\(\mathcal{M}\)</span>). On the left side we see <span class="math inline">\(\mathcal{M}_4\)</span>, while on the right side we see the ‘final’ model we’ve settled on, designated <span class="math inline">\(\mathcal{M}\)</span>.</p>
 <table class="table" style="width: auto !important; float: left; margin-right: 10px;">
 <thead>
 <tr>
@@ -1541,7 +1541,7 @@ arch[5]
 </tr>
 </tbody>
 </table>
-<p>There are two things to note. First, due to us modeling category-specific effects (right table) we see that we have several estimates of interest in <code>arch</code>, which is not even significant in the other model lacking category-specific effects. Second, for all category-specific effects we receive a much more fine-grained view of precisely which categories in each predictor are making a difference.</p>
+<p>There are two things to note. First, due to us modeling category-specific effects (right table) we see that we have several estimates of interest in <code>arch</code>, which is not even a significant parameter in <span class="math inline">\(\mathcal{M}_4\)</span>, whcih is lacking category-specific effects. Second, for all category-specific effects we receive a much more fine-grained view of precisely which categories in each predictor are making a difference.</p>
 <p>To start with, let’s focus on the right-hand side table consisting of estimates from <span class="math inline">\(\mathcal{M}\)</span>, and turn our attention to the other parameters. The <code>prio_s</code> parameter, 1.22, would then become 0.77 when transformed with the inverse logit, i.e.,</p>
 <p><span class="math display">\[\begin{equation}
 \frac{\exp(1.22)}{\exp(1.22)+1} = 0.77
@@ -1603,11 +1603,23 @@ arch[5]
 <div id="ref-agresti10" class="csl-entry">
 Agresti, A., 2010. Analysis of ordinal categorical data. John Wiley &amp; Sons.
 </div>
+<div id="ref-betancourt2018conceptual" class="csl-entry">
+Betancourt, M., 2018. A conceptual introduction to <span>H</span>amiltonian <span>M</span>onte <span>C</span>arlo.
+</div>
+<div id="ref-betancourt2016diagnosing" class="csl-entry">
+Betancourt, M., 2016. Diagnosing suboptimal cotangent disintegrations in <span>H</span>amiltonian <span>M</span>onte <span>C</span>arlo.
+</div>
 <div id="ref-burkner20monotonic" class="csl-entry">
 Bürkner, P.-C., Charpentier, E., 2020. Modelling monotonic effects of ordinal predictors in <span>B</span>ayesian regression models. British Journal of Mathematical and Statistical Psychology 73, 420–451. <a href="https://doi.org/10.1111/bmsp.12195">https://doi.org/10.1111/bmsp.12195</a>
 </div>
 <div id="ref-burkner19ordinal" class="csl-entry">
 Bürkner, P.-C., Vuorre, M., 2019. Ordinal regression models in psychology: <span>A</span> tutorial. Advances in Methods and Practices in Psychological Science 2, 77–101. <a href="https://doi.org/10.1177/2515245918823199">https://doi.org/10.1177/2515245918823199</a>
+</div>
+<div id="ref-homanG14hmc" class="csl-entry">
+Homan, M.D., Gelman, A., 2014. The <span>No-U-Turn</span> sampler: <span>A</span>daptively setting path lengths in <span>H</span>amiltonian <span>M</span>onte <span>C</span>arlo. Journal of Machine Learning Research 15, 1593–1623.
+</div>
+<div id="ref-piironenPV20projpred" class="csl-entry">
+Piironen, J., Paasiniemi, M., Vehtari, A., 2020. Projective inference in high-dimensional problems: <span>P</span>rediction and feature selection. Electronic Journal of Statistics 14, 2155–2197. <a href="https://doi.org/10.1214/20-EJS1711">https://doi.org/10.1214/20-EJS1711</a>
 </div>
 <div id="ref-samejima97" class="csl-entry">
 Samejima, F., 1997. Graded response model, in: Handbook of Modern Item Response Theory. Springer, pp. 85–100.
@@ -1617,6 +1629,9 @@ Tutz, G., 1990. Sequential item response models with an ordered response. Britis
 </div>
 <div id="ref-vehtari17loo" class="csl-entry">
 Vehtari, A., Gelman, A., Gabry, J., 2017. Practical <span>B</span>ayesian model evaluation using leave-one-out cross-validation and <span>WAIC</span>. Statistics and Computing 27, 1413–1432. <a href="https://doi.org/10.1007/s11222-016-9696-4">https://doi.org/10.1007/s11222-016-9696-4</a>
+</div>
+<div id="ref-vehtariGSCB21rhat" class="csl-entry">
+Vehtari, A., Gelman, A., Simpson, D., Carpenter, B., Bürkner, P.-C., 2021. Rank-normalization, folding, and localization: <span>A</span>n improved <span class="math inline">\(\widehat{R}\)</span> for assessing convergence of <span>MCMC</span>. Bayesian Analysis 1–28. <a href="https://doi.org/10.1214/20-BA1221">https://doi.org/10.1214/20-BA1221</a>
 </div>
 </div>
 </div>
@@ -1710,6 +1725,8 @@ library(brms)</code></pre>
 <ol>
 <li id="fn1"><p>In this text we use the words outcome and predictor for our dependent and independent variables, respectively. The word covariate can also often be used instead of predictor, even though it, in the traditional sense, means a continuous predictor.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
 <li id="fn2"><p><a href="https://mc-stan.org/misc/warnings.html" class="uri">https://mc-stan.org/misc/warnings.html</a><a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p><a href="https://mc-stan.org/docs/2_26/reference-manual/divergent-transitions.html" class="uri">https://mc-stan.org/docs/2_26/reference-manual/divergent-transitions.html</a><a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p><a href="https://mc-stan.org/docs/2_26/stan-users-guide/reparameterization-section.html" class="uri">https://mc-stan.org/docs/2_26/stan-users-guide/reparameterization-section.html</a><a href="#fnref4" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
 

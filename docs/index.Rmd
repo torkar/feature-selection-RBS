@@ -357,19 +357,19 @@ if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
 }
 ```
 
-When using `Stan` we have a plethora of diagnostics, which we should utilize to ensure validity and efficiency in our sampling. Below we summarize the ones we use.^[https://mc-stan.org/misc/warnings.html]
+When using dynamic Hamiltonian Monte Carlo we have a plethora of diagnostics, which we should utilize to ensure validity and efficiency when sampling. Here follows a summary of the most common diagnostics.^[https://mc-stan.org/misc/warnings.html]
 
-There should be no divergences since it's an indication that the posterior is biased; it arises when the posterior landscape is hard for the sample to explore (validity concern). A reparameterization of the model might be necessary if these divergences remain.
+There should be no divergences since it's an indication that the posterior is biased; it arises when the posterior landscape is hard for the sample to explore (validity concern).^[https://mc-stan.org/docs/2_26/reference-manual/divergent-transitions.html] A reparameterization of the model might be necessary if these divergences remain.^[https://mc-stan.org/docs/2_26/stan-users-guide/reparameterization-section.html]
 
-Tree depth warnings are not a validity concern but rather an efficiency concern. Reaching the maximum tree depth indicates that the sampler is terminating prematurely to avoid long execution time. 
+Tree depth warnings are not a validity concern but rather an efficiency concern. Reaching the maximum tree depth indicates that the sampler is terminating prematurely to avoid long execution time [@homanG14hmc].
 
-Having low energy values (E-BFMI) is an indication of a biased posterior (validity concern).
+Having low energy values (E-BFMI) is an indication of a biased posterior (validity concern) [@betancourt2016diagnosing].
 
-The $\widehat{R}$ convergence diagnostics indicates if the independent chains converged, i.e. explored the posterior in approximately the same way (validity concern).
+The $\widehat{R}$ convergence diagnostics indicates if the independent chains converged, i.e. explored the posterior in approximately the same way (validity concern) [@vehtariGSCB21rhat].
 
-The effective sample size ($\mathrm{ESS}$) captures how many independent draws contain the same amount of information as the dependent sample obtained by the MCMC algorithm. The higher the better. When we come closer to $0.1$ we should start worrying and in absolute numbers we should be in the hundreds for the Central Limit Theorem to hold.
+The effective sample size ($\mathrm{ESS}$) captures how many independent draws contain the same amount of information as the dependent sample obtained by the MCMC algorithm. The higher the better. When we come closer to $0.1$ we should start worrying and in absolute numbers we should be in the hundreds for the Central Limit Theorem to hold [@betancourt2018conceptual].
 
-Additionally, the Monte Carlo Standard Error (MCSE) has been checked for all models. The MCSE is yet another criteria that reflects effective accuracy of a Markov chain by dividing the standard deviation of the chain with the square root of its effective sample size,
+Additionally, the Monte Carlo Standard Error (MCSE) has been checked for all models. The MCSE is yet another criteria that reflects effective accuracy of a Markov chain by dividing the standard deviation of the chain with the square root of its effective sample size [@betancourt2018conceptual],
 
 \begin{equation}
 \mathrm{MCSE} = \frac{\mathrm{SD}}{\sqrt{\mathrm{ESS}}}
@@ -755,7 +755,7 @@ pp_check(M5, type = "bars", nsamples = 250)
 
 # Model comparison
 
-Once we've sampled our models we use LOO to compare the models' relative out of sample prediction capabilities [@vehtari17loo].
+Once we've sampled our set of models $M$ we use LOO to compare the models' relative out of sample prediction capabilities [@vehtari17loo].
 
 ```{r loo_comp}
 (l <- loo_compare(loo(M0), loo(M1), loo(M2), loo(M3), loo(M4), loo(M5)))
@@ -763,11 +763,11 @@ Once we've sampled our models we use LOO to compare the models' relative out of 
 
 `LOO` puts $\mathcal{M}_5$ as no. 1. If we assume a $z_{\mathrm{99\%}}$-score of $2.58$ it's clear that zero is not in the interval and that $\mathcal{M}_5$ has an advantage, i.e., $\mathrm{CI}_{z_{99\%}}$[`r round(l[2,1] + c(-1,1) * l[2,2] * 2.58, 2)`]. 
 
-We can also see that adding predictors to $\mathcal{M}_1$ *clearly* has a significant effect (compared to $\mathcal{M}_0$). However, adding monotonic effects, $\mathcal{M}_2$, had very little added benefit (i.e., $\mathcal{M}_1$ vs. $\mathcal{M}_2$), while adding category-specific effects, $\mathcal{M}_5$, definitely did something positive concerning out of sample predictions (i.e., $\mathcal{M}_5$ vs. $\mathcal{M}_4$).
+By looking at the expected log pointwise predictive density (elpd), one can see that adding predictors to $\mathcal{M}_1$ *clearly* has a significant effect (compared to $\mathcal{M}_0$). However, adding monotonic effects, $\mathcal{M}_2$, had very little added benefit (i.e., $\mathcal{M}_1$ vs. $\mathcal{M}_2$), while adding category-specific effects, $\mathcal{M}_5$, definitely did something positive concerning out of sample predictions (i.e., $\mathcal{M}_5$ vs. $\mathcal{M}_4$).
 
 Also worth noting is that the <font style="font-family: serif">Cumulative</font> models are, relatively speaking, performing the worst (i.e., $\mathcal{M}_1$ and $\mathcal{M}_2$). The <font style="font-family: serif">Sequential</font> models take the two first spots, while the <font style="font-family: serif">Adjacent-category</font> model falls behind on the third spot.
 
-If we would be interested in refining our models purely for optimal out of sample predictions we could conduct variable selection. However, in this particular case we are interested in each predictor's effect, so we'll keep them and decide to use $\mathcal{M}_5$ as our target model, $\mathcal{M}$, for now.
+If we would be interested in refining our models purely for optimal out of sample predictions we could conduct variable selection [@piironenPV20projpred]. However, in this particular case we are interested in each predictor's effect, so we'll keep them and decide to use $\mathcal{M}_5$ as our target model, $\mathcal{M}$, for now.
 
 ```{r}
 M <- M5
@@ -777,9 +777,9 @@ M <- M5
 
 ## Parameter estimates
 
-If we now focus on our estimates we will see that our *Intercepts*, which in this case are the borders between two categories in our outcome, are precisely estimated. However, to make sense of them we need to transform the estimates, since the values are on the $\logit$ scale.
+To make sense of the parameter estimates we need to transform them, since the values are on the $\logit$ scale.
 
-First, let's compare the model where we did *not* use category-specific effects, with the model which did use them. On the left side we see $\mathcal{M}_4$, while on the right side we see the 'final' model we've settled on, designated $\mathcal{M}$. 
+First, let's compare the model where we did *not* use category-specific effects ($\mathcal{M}_4$), with the model which did use them ($\mathcal{M}$). On the left side we see $\mathcal{M}_4$, while on the right side we see the 'final' model we've settled on, designated $\mathcal{M}$. 
 
 ```{r ef-no-cs, echo=FALSE}
 
@@ -797,7 +797,7 @@ d2 %>%
   row_spec(c(1:3,5:6,8,9,13:14,16:17,19:20), bold = TRUE)
 ```
 
-There are two things to note. First, due to us modeling category-specific effects (right table) we see that we have several estimates of interest in `arch`, which is not even significant in the other model lacking category-specific effects. Second, for all category-specific effects we receive a much more fine-grained view of precisely which categories in each predictor are making a difference. 
+There are two things to note. First, due to us modeling category-specific effects (right table) we see that we have several estimates of interest in `arch`, which is not even a significant parameter in $\mathcal{M}_4$, whcih is lacking category-specific effects. Second, for all category-specific effects we receive a much more fine-grained view of precisely which categories in each predictor are making a difference. 
 
 To start with, let's focus on the right-hand side table consisting of estimates from $\mathcal{M}$, and turn our attention to the other parameters. The `prio_s` parameter, `r round(fixef(M)[6,1], 2)`, would then become `r round(inv_logit_scaled(fixef(M)[6,1]), 2)` when transformed with the inverse logit, i.e., 
 
