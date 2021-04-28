@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/234703541.svg)](https://zenodo.org/badge/latestdoi/234703541)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4646845.svg)](https://doi.org/10.5281/zenodo.4646845)
 # Feature selection in requirements engineering
 
 ## Docker
