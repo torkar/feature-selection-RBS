@@ -156,6 +156,8 @@ First, we see that for the outcome `State` approximately as many features are re
 ```{r echo=FALSE}
 ggplot(d, aes(x=as.factor(State))) + 
   geom_bar() +
+  stat_count(aes(label=..count..), vjust=-1, 
+                          geom="text", position="identity") +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: State") +
@@ -192,12 +194,16 @@ Concerning `Business.value` and `Customer.value` they are fairly similar in thei
 ```{r echo=FALSE}
 ggplot(d, aes(x=Business.value)) + 
   geom_bar() +
+  stat_count(aes(label=..count..), vjust=-1, 
+                          geom="text", position="identity") +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: Business value") + 
   theme_tufte() + theme(text = element_text(size = 22))
 
 ggplot(d, aes(x=Customer.value)) + 
+  stat_count(aes(label=..count..), vjust=-1, 
+                          geom="text", position="identity") +
   geom_bar() +
   xlab("") + 
   ylab("Num. features") +
@@ -210,8 +216,10 @@ For `Stakeholder` and `Key.customers` we see a strong emphasis on lower numbers,
 ```{r echo=FALSE}
 ggplot(d, aes(x=as.factor(Stakeholders))) +
   geom_bar() +
+  stat_count(aes(label=..count..), vjust=-1, 
+                          geom="text", position="identity") +
   xlab("Num. stakeholders") +
-  ylab("Frequency") +
+  ylab("") +
   ggtitle("Predictor: Stakeholders") +
   theme_tufte() + theme(text = element_text(size = 22))
 
@@ -235,6 +243,8 @@ Finally, for `Architects.involvement` one can see that in the absolute majority 
 ```{r echo=FALSE}
 ggplot(d, aes(x=Architects.involvement)) + 
   geom_bar() +
+  stat_count(aes(label=..count..), vjust=-1, 
+                          geom="text", position="identity") +
   xlab("") + 
   ylab("Num. features") +
   ggtitle("Predictor: Architects' involvement") +
@@ -443,16 +453,16 @@ M1 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
 
 ```{r M1-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M0)$fit)
+rstan::check_hmc_diagnostics(eval(M1)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+if(max(rhat(eval(M1)), na.rm=T) >= 1.01) {
   print("Warning: Rhat >=1.01")
 } else {
   print("All Rhat <1.01")
 }
 
-if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+if(min(neff_ratio(eval(M1)), na.rm=T) <= 0.2) {
   print("Warning: ESS <=0.2")
 } else {
   print("All ESS >0.2")
@@ -518,16 +528,16 @@ M2 <- brm(State ~ 1 + prio_s + crit + mo(b_val) + mo(c_val) + sh_s + kc_s +
 
 ```{r M2-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M0)$fit)
+rstan::check_hmc_diagnostics(eval(M2)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+if(max(rhat(eval(M2)), na.rm=T) >= 1.01) {
   print("Warning: Rhat >=1.01")
 } else {
   print("All Rhat <1.01")
 }
 
-if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+if(min(neff_ratio(eval(M2)), na.rm=T) <= 0.2) {
   print("Warning: ESS <=0.2")
 } else {
   print("All ESS >0.2")
@@ -592,13 +602,13 @@ M3 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
 rstan::check_hmc_diagnostics(eval(M0)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+if(max(rhat(eval(M3)), na.rm=T) >= 1.01) {
   print("Warning: Rhat >=1.01")
 } else {
   print("All Rhat <1.01")
 }
 
-if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+if(min(neff_ratio(eval(M3)), na.rm=T) <= 0.2) {
   print("Warning: ESS <=0.2")
 } else {
   print("All ESS >0.2")
@@ -662,16 +672,16 @@ M4 <- brm(State ~ 1 + prio_s + crit + b_val + c_val + sh_s + kc_s + dep + arch,
 
 ```{r M4-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M0)$fit)
+rstan::check_hmc_diagnostics(eval(M4)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+if(max(rhat(eval(M4)), na.rm=T) >= 1.01) {
   print("Warning: Rhat >=1.01")
 } else {
   print("All Rhat <1.01")
 }
 
-if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+if(min(neff_ratio(eval(M4)), na.rm=T) <= 0.2) {
   print("Warning: ESS <=0.2")
 } else {
   print("All ESS >0.2")
@@ -734,16 +744,16 @@ M5 <- brm(State ~ 1 + prio_s + crit + cs(b_val) + cs(c_val) + sh_s +
 
 ```{r M5-diagnostics, echo=TRUE}
 # Check divergences, tree depth, energy
-rstan::check_hmc_diagnostics(eval(M0)$fit)
+rstan::check_hmc_diagnostics(eval(M5)$fit)
 
 # Check rhat and ESS
-if(max(rhat(eval(M0)), na.rm=T) >= 1.01) {
+if(max(rhat(eval(M5)), na.rm=T) >= 1.01) {
   print("Warning: Rhat >=1.01")
 } else {
   print("All Rhat <1.01")
 }
 
-if(min(neff_ratio(eval(M0)), na.rm=T) <= 0.2) {
+if(min(neff_ratio(eval(M5)), na.rm=T) <= 0.2) {
   print("Warning: ESS <=0.2")
 } else {
   print("All ESS >0.2")
@@ -872,37 +882,46 @@ One important question we would like to have an answer to is which independent v
 
 ```{r, echo = FALSE}
 plot(ce, plot = FALSE)[[1]] + 
-  scale_fill_colorblind() + 
+  scale_fill_colorblind(labels = c(seq(1,6))) + 
+  scale_color_colorblind(labels = c(seq(1,6))) +
   xlab("Priority (scaled)") + 
-  theme_tufte()
+  theme_tufte(base_size = 18) + 
+  theme(legend.position = "none")
 ```
 
 Concerning `Priority` we see that it has a very large effect for State $6$ (i.e., a feature being released). The higher the priority (the more to the right) the more probability mass is set on State $6$. In the end it has close to $70$% of the probability mass, while the other states are not even close. Also worth noting is how, for State $4$ (the hump), medium priorities seem to be the recipe for reaching this stage. 
 
 ```{r, echo = FALSE}
 plot(ce, plot = FALSE)[[2]] + 
-  scale_fill_colorblind() + 
-  scale_x_continuous(name = "Critical", breaks=c(0,1), labels = c("No", "Yes")) +
-  theme_tufte()
+  scale_fill_colorblind(labels = c(seq(1,6))) + 
+  scale_color_colorblind(labels = c(seq(1,6))) + 
+  scale_x_continuous(name = "Critical", breaks=c(0,1), 
+                     labels = c("No", "Yes")) +
+  theme_tufte(base_size = 18) + ylab("")
 ```
 
 For the predictor `Critical` we see some of the same effects, albeit the uncertainty increases. The clearest effect is visible for State $6$, i.e., going from No to Yes significantly increases the probability, while the opposite holds for States $1$--$3$ (logically so, since if it is critical then a requirement should be released with a higher probability, i.e., Stage $6$).
 
 ```{r, echo = FALSE, warning=FALSE}
 plot(ce, plot = FALSE)[[3]] + 
-  scale_fill_colorblind() + 
+  scale_fill_colorblind(labels = c(seq(1,6))) + 
+  scale_color_colorblind(labels = c(seq(1,6))) +
   xlab("Number of stakeholders") +
-  theme_tufte() +
-  xlim(0, 15)
+  scale_x_continuous(breaks=c(0,2,4,6,8,10) ) +
+  coord_cartesian(xlim=c(0,10)) +
+  theme_tufte(base_size = 18) + 
+  theme(legend.position = "none")
 ```
 
 Concerning `Number of stakeholders`, we see that virtually all states (except State $1$) has a lower probability with increasing number of stakeholders (and more uncertainty is visible). For State $1$, however, an increase in stakeholders leads to an increase in probability. One could claim this is natural since having stakeholders would lead to the requirement being considered in the first place.
 
 ```{r, echo = FALSE}
 plot(ce, plot = FALSE)[[5]] + 
-  scale_fill_colorblind() + 
+  scale_fill_colorblind(labels = c(seq(1,6))) + 
+  scale_color_colorblind(labels = c(seq(1,6))) + 
   scale_x_continuous(name = "Dependency", breaks=c(0,1), labels = c("No", "Yes")) +
-  theme_tufte()
+  theme_tufte(base_size = 18) + 
+  theme(legend.position = "none")  + ylab("")
 ```
 
 
